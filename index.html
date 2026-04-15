@@ -1,0 +1,971 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>NFL Draft Party - Offense or Defense?</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #0f172a; color: #f1f5f9; font-family: 'Outfit', sans-serif; -webkit-font-smoothing: antialiased; }
+  select { -webkit-appearance: none; appearance: none; }
+  input::placeholder { color: #64748b; }
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #475569; border-radius: 3px; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script src="https://www.gstatic.com/firebasejs/11.6.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore-compat.js"></script>
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+<script>
+// Initialize Firebase with compat SDK (global, no imports needed)
+firebase.initializeApp({
+  apiKey: "AIzaSyB1sFa_YkYaG-SlUmJ3GdFo3XM3nmw3FXs",
+  authDomain: "nfl-draft-party.firebaseapp.com",
+  projectId: "nfl-draft-party",
+  storageBucket: "nfl-draft-party.firebasestorage.app",
+  messagingSenderId: "1028171526075",
+  appId: "1:1028171526075:web:165b774100e5036eca1e9e"
+});
+const db = firebase.firestore();
+</script>
+
+<script type="text/babel">
+const { useState, useEffect, useCallback, useMemo, useRef } = React;
+
+const HR = [{"y":2017,"p":1,"tm":"Browns","pl":"Myles Garrett","pos":"DE","s":"DEF","col":"Texas A&M","conf":"SEC"},{"y":2017,"p":2,"tm":"Bears","pl":"Mitch Trubisky","pos":"QB","s":"OFF","col":"North Carolina","conf":"ACC"},{"y":2017,"p":3,"tm":"49ers","pl":"Solomon Thomas","pos":"DE","s":"DEF","col":"Stanford","conf":"ACC"},{"y":2017,"p":4,"tm":"Jaguars","pl":"Leonard Fournette","pos":"RB","s":"OFF","col":"LSU","conf":"SEC"},{"y":2017,"p":5,"tm":"Titans","pl":"Corey Davis","pos":"WR","s":"OFF","col":"Western Michigan","conf":"Other"},{"y":2017,"p":6,"tm":"Jets","pl":"Jamal Adams","pos":"S","s":"DEF","col":"LSU","conf":"SEC"},{"y":2017,"p":7,"tm":"Chargers","pl":"Mike Williams","pos":"WR","s":"OFF","col":"Clemson","conf":"ACC"},{"y":2017,"p":8,"tm":"Panthers","pl":"Christian McCaffrey","pos":"RB","s":"OFF","col":"Stanford","conf":"ACC"},{"y":2017,"p":9,"tm":"Bengals","pl":"John Ross","pos":"WR","s":"OFF","col":"Washington","conf":"Big Ten"},{"y":2017,"p":10,"tm":"Chiefs","pl":"Patrick Mahomes","pos":"QB","s":"OFF","col":"Texas Tech","conf":"Big 12"},{"y":2017,"p":11,"tm":"Saints","pl":"Marshon Lattimore","pos":"CB","s":"DEF","col":"Ohio State","conf":"Big Ten"},{"y":2017,"p":12,"tm":"Texans","pl":"Deshaun Watson","pos":"QB","s":"OFF","col":"Clemson","conf":"ACC"},{"y":2017,"p":13,"tm":"Cardinals","pl":"Haason Reddick","pos":"LB","s":"DEF","col":"Temple","conf":"Other"},{"y":2017,"p":14,"tm":"Eagles","pl":"Derek Barnett","pos":"DE","s":"DEF","col":"Tennessee","conf":"SEC"},{"y":2017,"p":15,"tm":"Colts","pl":"Malik Hooker","pos":"S","s":"DEF","col":"Ohio State","conf":"Big Ten"},{"y":2017,"p":16,"tm":"Ravens","pl":"Marlon Humphrey","pos":"CB","s":"DEF","col":"Alabama","conf":"SEC"},{"y":2017,"p":17,"tm":"Redskins","pl":"Jonathan Allen","pos":"DE","s":"DEF","col":"Alabama","conf":"SEC"},{"y":2017,"p":18,"tm":"Titans","pl":"Adoree Jackson","pos":"CB","s":"DEF","col":"USC","conf":"Big Ten"},{"y":2017,"p":19,"tm":"Bucs","pl":"OJ Howard","pos":"TE","s":"OFF","col":"Alabama","conf":"SEC"},{"y":2017,"p":20,"tm":"Broncos","pl":"Garett Bolles","pos":"T","s":"OFF","col":"Utah","conf":"Big 12"},{"y":2017,"p":21,"tm":"Lions","pl":"Jarrad Davis","pos":"LB","s":"DEF","col":"Florida","conf":"SEC"},{"y":2017,"p":22,"tm":"Dolphins","pl":"Charles Harris","pos":"DE","s":"DEF","col":"Missouri","conf":"SEC"},{"y":2017,"p":23,"tm":"Giants","pl":"Evan Engram","pos":"TE","s":"OFF","col":"Mississippi","conf":"SEC"},{"y":2017,"p":24,"tm":"Raiders","pl":"Gareon Conley","pos":"CB","s":"DEF","col":"Ohio State","conf":"Big Ten"},{"y":2017,"p":25,"tm":"Browns","pl":"Jabrill Peppers","pos":"S","s":"DEF","col":"Michigan","conf":"Big Ten"},{"y":2017,"p":26,"tm":"Falcons","pl":"Takkarist McKinley","pos":"DE","s":"DEF","col":"UCLA","conf":"Big Ten"},{"y":2017,"p":27,"tm":"Bills","pl":"TreDavious White","pos":"CB","s":"DEF","col":"LSU","conf":"SEC"},{"y":2017,"p":28,"tm":"Cowboys","pl":"Taco Charlton","pos":"DE","s":"DEF","col":"Michigan","conf":"Big Ten"},{"y":2017,"p":29,"tm":"Browns","pl":"David Njoku","pos":"TE","s":"OFF","col":"Miami","conf":"ACC"},{"y":2017,"p":30,"tm":"Steelers","pl":"TJ Watt","pos":"LB","s":"DEF","col":"Wisconsin","conf":"Big Ten"},{"y":2017,"p":31,"tm":"49ers","pl":"Reuben Foster","pos":"LB","s":"DEF","col":"Alabama","conf":"SEC"},{"y":2017,"p":32,"tm":"Saints","pl":"Ryan Ramczyk","pos":"T","s":"OFF","col":"Wisconsin","conf":"Big Ten"},{"y":2018,"p":1,"tm":"Browns","pl":"Baker Mayfield","pos":"QB","s":"OFF","col":"Oklahoma","conf":"SEC"},{"y":2018,"p":2,"tm":"Giants","pl":"Saquon Barkley","pos":"RB","s":"OFF","col":"Penn St","conf":"Big Ten"},{"y":2018,"p":3,"tm":"Jets","pl":"Sam Darnold","pos":"QB","s":"OFF","col":"USC","conf":"Big Ten"},{"y":2018,"p":4,"tm":"Browns","pl":"Denzel Ward","pos":"CB","s":"DEF","col":"Ohio State","conf":"Big Ten"},{"y":2018,"p":5,"tm":"Broncos","pl":"Bradley Chubb","pos":"DE","s":"DEF","col":"North Carolina State","conf":"ACC"},{"y":2018,"p":6,"tm":"Colts","pl":"Quenton Nelson","pos":"G","s":"OFF","col":"Notre Dame","conf":"Independent"},{"y":2018,"p":7,"tm":"Bills","pl":"Josh Allen","pos":"QB","s":"OFF","col":"Wyoming","conf":"Mountain West"},{"y":2018,"p":8,"tm":"Bears","pl":"Roquan Smith","pos":"LB","s":"DEF","col":"Georgia","conf":"SEC"},{"y":2018,"p":9,"tm":"49ers","pl":"Mike McGlinchey","pos":"T","s":"OFF","col":"Notre Dame","conf":"Independent"},{"y":2018,"p":10,"tm":"Cardinals","pl":"Josh Rosen","pos":"QB","s":"OFF","col":"UCLA","conf":"Big Ten"},{"y":2018,"p":11,"tm":"Dolphins","pl":"Minkah Fitzpatrick","pos":"S","s":"DEF","col":"Alabama","conf":"SEC"},{"y":2018,"p":12,"tm":"Bucs","pl":"Vita Vea","pos":"DT","s":"DEF","col":"Washington","conf":"Big Ten"},{"y":2018,"p":13,"tm":"Redskins","pl":"DaRon Payne","pos":"DT","s":"DEF","col":"Alabama","conf":"SEC"},{"y":2018,"p":14,"tm":"Saints","pl":"Marcus Davenport","pos":"DE","s":"DEF","col":"UTSA","conf":"Other"},{"y":2018,"p":15,"tm":"Raiders","pl":"Kolton Miller","pos":"T","s":"OFF","col":"UCLA","conf":"Big Ten"},{"y":2018,"p":16,"tm":"Bills","pl":"Tremaine Edmunds","pos":"LB","s":"DEF","col":"Virginia Tech","conf":"ACC"},{"y":2018,"p":17,"tm":"Chargers","pl":"Derwin James","pos":"S","s":"DEF","col":"Florida State","conf":"ACC"},{"y":2018,"p":18,"tm":"Packers","pl":"Jaire Alexander","pos":"NA","s":"DEF","col":"Louisville","conf":"ACC"},{"y":2018,"p":19,"tm":"Cowboys","pl":"Leighton VanderEsch","pos":"LB","s":"DEF","col":"Boise State","conf":"Mountain West"},{"y":2018,"p":20,"tm":"Lions","pl":"Frank Ragnow","pos":"C","s":"OFF","col":"Arkansas","conf":"SEC"},{"y":2018,"p":21,"tm":"Bengals","pl":"Billy Price","pos":"C","s":"OFF","col":"Ohio State","conf":"Big Ten"},{"y":2018,"p":22,"tm":"Titans","pl":"Rashaan Evans","pos":"LB","s":"DEF","col":"Alabama","conf":"SEC"},{"y":2018,"p":23,"tm":"Patriots","pl":"Isaiah Wynn","pos":"T","s":"OFF","col":"Georgia","conf":"SEC"},{"y":2018,"p":24,"tm":"Panthers","pl":"DJ Moore","pos":"WR","s":"OFF","col":"Maryland","conf":"Big Ten"},{"y":2018,"p":25,"tm":"Ravens","pl":"Hayden Hurst","pos":"TE","s":"OFF","col":"South Carolina","conf":"SEC"},{"y":2018,"p":26,"tm":"Falcons","pl":"Calvin Ridley","pos":"WR","s":"OFF","col":"Alabama","conf":"SEC"},{"y":2018,"p":27,"tm":"Seahawks","pl":"Rashaad Penny","pos":"RB","s":"OFF","col":"San Diego State","conf":"Mountain West"},{"y":2018,"p":28,"tm":"Steelers","pl":"Terrell Edmunds","pos":"S","s":"DEF","col":"Virginia Tech","conf":"ACC"},{"y":2018,"p":29,"tm":"Jaguars","pl":"Taven Bryan","pos":"DT","s":"DEF","col":"Florida","conf":"SEC"},{"y":2018,"p":30,"tm":"Vikings","pl":"Mike Hughes","pos":"CB","s":"DEF","col":"UCF","conf":"Big 12"},{"y":2018,"p":31,"tm":"Patriots","pl":"Sony Michel","pos":"RB","s":"OFF","col":"Georgia","conf":"SEC"},{"y":2018,"p":32,"tm":"Ravens","pl":"Lamar Jackson","pos":"QB","s":"OFF","col":"Louisville","conf":"ACC"},{"y":2019,"p":1,"tm":"Cardinals","pl":"Kyler Murray","pos":"QB","s":"OFF","col":"Oklahoma","conf":"SEC"},{"y":2019,"p":2,"tm":"49ers","pl":"Nick Bosa","pos":"DE","s":"DEF","col":"Ohio State","conf":"Big Ten"},{"y":2019,"p":3,"tm":"Jets","pl":"Quinnen Williams","pos":"DT","s":"DEF","col":"Alabama","conf":"SEC"},{"y":2019,"p":4,"tm":"Raiders","pl":"Clelin Ferrell","pos":"DE","s":"DEF","col":"Clemson","conf":"ACC"},{"y":2019,"p":5,"tm":"Bucs","pl":"Devin White","pos":"LB","s":"DEF","col":"LSU","conf":"SEC"},{"y":2019,"p":6,"tm":"Giants","pl":"Daniel Jones","pos":"QB","s":"OFF","col":"Duke","conf":"ACC"},{"y":2019,"p":7,"tm":"Jaguars","pl":"Josh Allen","pos":"DE","s":"DEF","col":"Kentucky","conf":"SEC"},{"y":2019,"p":8,"tm":"Lions","pl":"TJ Hockenson","pos":"TE","s":"OFF","col":"Iowa","conf":"Big Ten"},{"y":2019,"p":9,"tm":"Bills","pl":"Ed Oliver","pos":"DT","s":"DEF","col":"Houston","conf":"Big 12"},{"y":2019,"p":10,"tm":"Steelers","pl":"Devin Bush","pos":"LB","s":"DEF","col":"Michigan","conf":"Big Ten"},{"y":2019,"p":11,"tm":"Bengals","pl":"Jonah Williams","pos":"T","s":"OFF","col":"Alabama","conf":"SEC"},{"y":2019,"p":12,"tm":"Packers","pl":"Rashan Gary","pos":"DE","s":"DEF","col":"Michigan","conf":"Big Ten"},{"y":2019,"p":13,"tm":"Dolphins","pl":"Christian Wilkins","pos":"DT","s":"DEF","col":"Clemson","conf":"ACC"},{"y":2019,"p":14,"tm":"Falcons","pl":"Christian Lindstrom","pos":"G","s":"OFF","col":"Boston College","conf":"ACC"},{"y":2019,"p":15,"tm":"Redskins","pl":"Dwayne Haskins","pos":"QB","s":"OFF","col":"Ohio State","conf":"Big Ten"},{"y":2019,"p":16,"tm":"Panthers","pl":"Brian Burns","pos":"DE","s":"DEF","col":"Florida State","conf":"ACC"},{"y":2019,"p":17,"tm":"Giants","pl":"Dexter Lawrence","pos":"DT","s":"DEF","col":"Clemson","conf":"ACC"},{"y":2019,"p":18,"tm":"Vikings","pl":"Garrett Bradbury","pos":"C","s":"OFF","col":"NCSU","conf":"ACC"},{"y":2019,"p":19,"tm":"Titans","pl":"Jeffery Simmons","pos":"DT","s":"DEF","col":"Mississippi State","conf":"SEC"},{"y":2019,"p":20,"tm":"Broncos","pl":"Noah Fant","pos":"TE","s":"OFF","col":"Iowa","conf":"Big Ten"},{"y":2019,"p":21,"tm":"Packers","pl":"Darnell Savage","pos":"S","s":"DEF","col":"Maryland","conf":"Big Ten"},{"y":2019,"p":22,"tm":"Eagles","pl":"Andre Dillard","pos":"T","s":"OFF","col":"Washington State","conf":"Other"},{"y":2019,"p":23,"tm":"Texans","pl":"Tytus Howard","pos":"T","s":"OFF","col":"Alabama State","conf":"Other"},{"y":2019,"p":24,"tm":"Raiders","pl":"Josh Jacobs","pos":"RB","s":"OFF","col":"Alabama","conf":"SEC"},{"y":2019,"p":25,"tm":"Ravens","pl":"Marquise Brown","pos":"WR","s":"OFF","col":"Oklahoma","conf":"SEC"},{"y":2019,"p":26,"tm":"Redskins","pl":"Montez Sweat","pos":"DE","s":"DEF","col":"Mississippi State","conf":"SEC"},{"y":2019,"p":27,"tm":"Raiders","pl":"Jonhnathan Abram","pos":"S","s":"DEF","col":"Mississippi State","conf":"SEC"},{"y":2019,"p":28,"tm":"Chargers","pl":"Jerry Tillery","pos":"DT","s":"DEF","col":"Notre Dame","conf":"Independent"},{"y":2019,"p":29,"tm":"Seahawks","pl":"LJ Collier","pos":"DE","s":"DEF","col":"TCU","conf":"Big 12"},{"y":2019,"p":30,"tm":"Giants","pl":"Deandre Baker","pos":"CB","s":"DEF","col":"Georgia","conf":"SEC"},{"y":2019,"p":31,"tm":"Falcons","pl":"Kaleb McGary","pos":"T","s":"OFF","col":"Washington","conf":"Big Ten"},{"y":2019,"p":32,"tm":"Patriots","pl":"Nkeal Harry","pos":"WR","s":"OFF","col":"Arizona State","conf":"Big 12"},{"y":2020,"p":1,"tm":"Bengals","pl":"Joe Burrow","pos":"QB","s":"OFF","col":"LSU","conf":"SEC"},{"y":2020,"p":2,"tm":"Redskins","pl":"Chase Young","pos":"DE","s":"DEF","col":"OSU","conf":"Big Ten"},{"y":2020,"p":3,"tm":"Lions","pl":"Jeff Okudah","pos":"CB","s":"DEF","col":"OSU","conf":"Big Ten"},{"y":2020,"p":4,"tm":"Giants","pl":"Andrew Thomas","pos":"T","s":"OFF","col":"George","conf":"Other"},{"y":2020,"p":5,"tm":"Dolphins","pl":"Tua Tagovailoa","pos":"QB","s":"OFF","col":"Alabama","conf":"SEC"},{"y":2020,"p":6,"tm":"Chargers","pl":"Justin Herbert","pos":"QB","s":"OFF","col":"Oregon","conf":"Big Ten"},{"y":2020,"p":7,"tm":"Panthers","pl":"Derrick Brown","pos":"DT","s":"DEF","col":"Auburn","conf":"SEC"},{"y":2020,"p":8,"tm":"Cardinals","pl":"Isaiah Simmons","pos":"LB","s":"DEF","col":"Clemson","conf":"ACC"},{"y":2020,"p":9,"tm":"Jaguars","pl":"CJ Henderson","pos":"CB","s":"DEF","col":"Florida","conf":"SEC"},{"y":2020,"p":10,"tm":"Browns","pl":"Jedrick Wills","pos":"T","s":"OFF","col":"Alabama","conf":"SEC"},{"y":2020,"p":11,"tm":"Jets","pl":"Mekhi Becton","pos":"T","s":"OFF","col":"Louisville","conf":"ACC"},{"y":2020,"p":12,"tm":"Raiders","pl":"Henry Ruggs","pos":"WR","s":"OFF","col":"Alabama","conf":"SEC"},{"y":2020,"p":13,"tm":"Buccaneers","pl":"Tristan Wirfs","pos":"T","s":"OFF","col":"Iowa","conf":"Big Ten"},{"y":2020,"p":14,"tm":"49ers","pl":"Javon Kinlaw","pos":"DT","s":"DEF","col":"South Carolina","conf":"SEC"},{"y":2020,"p":15,"tm":"Broncos","pl":"Jerry Jeudy","pos":"WR","s":"OFF","col":"Alabama","conf":"SEC"},{"y":2020,"p":16,"tm":"Falcons","pl":"AJ Terrell","pos":"CB","s":"DEF","col":"Clemson","conf":"ACC"},{"y":2020,"p":17,"tm":"Cowboys","pl":"CeeDee Lamb","pos":"WR","s":"OFF","col":"Oklahoma","conf":"SEC"},{"y":2020,"p":18,"tm":"Dolphins","pl":"Austin Jackson","pos":"T","s":"OFF","col":"USC","conf":"Big Ten"},{"y":2020,"p":19,"tm":"Raiders","pl":"Damon Arnette","pos":"CB","s":"DEF","col":"OSU","conf":"Big Ten"},{"y":2020,"p":20,"tm":"Jaguars","pl":"Klavon Chaisson","pos":"DE","s":"DEF","col":"LSU","conf":"SEC"},{"y":2020,"p":21,"tm":"Eagles","pl":"Jalen Reagor","pos":"WR","s":"OFF","col":"TCU","conf":"Big 12"},{"y":2020,"p":22,"tm":"Vikings","pl":"Justin Jefferson","pos":"WR","s":"OFF","col":"LSU","conf":"SEC"},{"y":2020,"p":23,"tm":"Chargers","pl":"Kenneth Murray","pos":"LB","s":"DEF","col":"Oklahoma","conf":"SEC"},{"y":2020,"p":24,"tm":"Saints","pl":"Cesar Ruiz","pos":"CB","s":"OFF","col":"Michigan","conf":"Big Ten"},{"y":2020,"p":25,"tm":"49ers","pl":"Brandon Aiyuk","pos":"WR","s":"OFF","col":"Arizona State","conf":"Big 12"},{"y":2020,"p":26,"tm":"Packers","pl":"Jordan Love","pos":"QB","s":"OFF","col":"Utah State","conf":"Other"},{"y":2020,"p":27,"tm":"Seahawks","pl":"Jordan Brooks","pos":"LB","s":"DEF","col":"Texas Tech","conf":"Big 12"},{"y":2020,"p":28,"tm":"Ravens","pl":"Patrick Queen","pos":"LB","s":"DEF","col":"LSU","conf":"SEC"},{"y":2020,"p":29,"tm":"Titans","pl":"Isaiah Wilson","pos":"T","s":"OFF","col":"Georgia","conf":"SEC"},{"y":2020,"p":30,"tm":"Dolphins","pl":"Noah Igbinoghene","pos":"CB","s":"DEF","col":"Auburn","conf":"SEC"},{"y":2020,"p":31,"tm":"Vikings","pl":"Jeff Gladney","pos":"CB","s":"DEF","col":"TCU","conf":"Big 12"},{"y":2020,"p":32,"tm":"Chiefs","pl":"Clyde Edwards-Helaire","pos":"RB","s":"OFF","col":"LSU","conf":"SEC"},{"y":2021,"p":1,"tm":"Jaguars","pl":"Trevor Lawrence","pos":"QB","s":"OFF","col":"Clemson","conf":"ACC"},{"y":2021,"p":2,"tm":"Jets","pl":"Zach Wilson","pos":"QB","s":"OFF","col":"BYU","conf":"Big 12"},{"y":2021,"p":3,"tm":"49ers","pl":"Trey Lance","pos":"QB","s":"OFF","col":"NDSU","conf":"Other"},{"y":2021,"p":4,"tm":"Falcons","pl":"Kyle Pitts","pos":"TE","s":"OFF","col":"Florida","conf":"SEC"},{"y":2021,"p":5,"tm":"Bengals","pl":"JaMarr Chase","pos":"WR","s":"OFF","col":"LSU","conf":"SEC"},{"y":2021,"p":6,"tm":"Dolphins","pl":"Jaylen Waddle","pos":"WR","s":"OFF","col":"Alabama","conf":"SEC"},{"y":2021,"p":7,"tm":"Lions","pl":"Penei Sewell","pos":"T","s":"OFF","col":"Oregon","conf":"Big Ten"},{"y":2021,"p":8,"tm":"Panthers","pl":"Jaycee Horn","pos":"CB","s":"DEF","col":"South Carolina","conf":"SEC"},{"y":2021,"p":9,"tm":"Broncos","pl":"Patrick Surtain","pos":"CB","s":"DEF","col":"Alabama","conf":"SEC"},{"y":2021,"p":10,"tm":"Eagles","pl":"DeVonta Smith","pos":"WR","s":"OFF","col":"Alabama","conf":"SEC"},{"y":2021,"p":11,"tm":"Bears","pl":"Justin Fields","pos":"QB","s":"OFF","col":"Ohio State","conf":"Big Ten"},{"y":2021,"p":12,"tm":"Cowboys","pl":"Micah Parsons","pos":"LB","s":"DEF","col":"PSU","conf":"Big Ten"},{"y":2021,"p":13,"tm":"Chargers","pl":"Rashawn Slater","pos":"T","s":"OFF","col":"Northwestern","conf":"Big Ten"},{"y":2021,"p":14,"tm":"Jets","pl":"Alijah VeraTucker","pos":"G","s":"OFF","col":"USC","conf":"Big Ten"},{"y":2021,"p":15,"tm":"Patriots","pl":"Mack Jones","pos":"QB","s":"OFF","col":"Alabama","conf":"SEC"},{"y":2021,"p":16,"tm":"Cardinals","pl":"Zaven Collins","pos":"LB","s":"DEF","col":"Tulsa","conf":"Other"},{"y":2021,"p":17,"tm":"Raiders","pl":"Alex Leatherwood","pos":"T","s":"OFF","col":"Alabama","conf":"SEC"},{"y":2021,"p":18,"tm":"Dolphins","pl":"Jaelan Phillips","pos":"DE","s":"DEF","col":"Miami","conf":"ACC"},{"y":2021,"p":19,"tm":"Redskins","pl":"Jamin Davis","pos":"LB","s":"DEF","col":"Kentucky","conf":"SEC"},{"y":2021,"p":20,"tm":"Giants","pl":"Kadarius Toney","pos":"WR","s":"OFF","col":"Florida","conf":"SEC"},{"y":2021,"p":21,"tm":"Colts","pl":"Kwity Paye","pos":"DE","s":"DEF","col":"Michigan","conf":"Big Ten"},{"y":2021,"p":22,"tm":"Titans","pl":"Caleb Farley","pos":"CB","s":"DEF","col":"Virginia Tech","conf":"ACC"},{"y":2021,"p":23,"tm":"Vikings","pl":"Christian Darrisaw","pos":"T","s":"OFF","col":"Virginia Tech","conf":"ACC"},{"y":2021,"p":24,"tm":"Steelers","pl":"Najee Harris","pos":"RB","s":"OFF","col":"Alabama","conf":"SEC"},{"y":2021,"p":25,"tm":"Jaguars","pl":"Travis Etienne","pos":"RB","s":"OFF","col":"Clemson","conf":"ACC"},{"y":2021,"p":26,"tm":"Browns","pl":"Greg Newsome","pos":"CB","s":"DEF","col":"Northwestern","conf":"Big Ten"},{"y":2021,"p":27,"tm":"Ravens","pl":"Rashod Bateman","pos":"WR","s":"OFF","col":"Minnesota","conf":"Big Ten"},{"y":2021,"p":28,"tm":"Saints","pl":"Payton Turner","pos":"DE","s":"DEF","col":"Houston","conf":"Big 12"},{"y":2021,"p":29,"tm":"Packers","pl":"Eric Stokes","pos":"CB","s":"DEF","col":"Georgia","conf":"SEC"},{"y":2021,"p":30,"tm":"Bills","pl":"Gregory Rousseau","pos":"DE","s":"DEF","col":"Miami","conf":"ACC"},{"y":2021,"p":31,"tm":"Ravens","pl":"Jayson Oweh","pos":"DE","s":"DEF","col":"PSU","conf":"Big Ten"},{"y":2021,"p":32,"tm":"Buccaneers","pl":"Joe Tryon","pos":"LB","s":"DEF","col":"Washington","conf":"Big Ten"},{"y":2022,"p":1,"tm":"Jaguars","pl":"Trevon Walker","pos":"DE","s":"DEF","col":"Georgia","conf":"SEC"},{"y":2022,"p":2,"tm":"Lions","pl":"Aiden Hutchinson","pos":"DE","s":"DEF","col":"Michigan","conf":"Big Ten"},{"y":2022,"p":3,"tm":"Texans","pl":"Derek Stingley","pos":"CB","s":"DEF","col":"LSU","conf":"SEC"},{"y":2022,"p":4,"tm":"Jets","pl":"Sauce Gardner","pos":"CB","s":"DEF","col":"Cincinnati","conf":"Big 12"},{"y":2022,"p":5,"tm":"Giants","pl":"Kayvon Thibodeaux","pos":"DE","s":"DEF","col":"Oregon","conf":"Big Ten"},{"y":2022,"p":6,"tm":"Panthers","pl":"Imem Ekwonu","pos":"OT","s":"OFF","col":"NCSU","conf":"ACC"},{"y":2022,"p":7,"tm":"Giants","pl":"Evan Neal","pos":"OT","s":"OFF","col":"Alabama","conf":"SEC"},{"y":2022,"p":8,"tm":"Falcons","pl":"Drake London","pos":"WR","s":"OFF","col":"USC","conf":"Big Ten"},{"y":2022,"p":9,"tm":"Seahawks","pl":"Charles Cross","pos":"OT","s":"OFF","col":"Miss St","conf":"SEC"},{"y":2022,"p":10,"tm":"Jets","pl":"Garrett Wilson","pos":"WR","s":"OFF","col":"OSU","conf":"Big Ten"},{"y":2022,"p":11,"tm":"Saints","pl":"Chris Olave","pos":"WR","s":"OFF","col":"OSU","conf":"Big Ten"},{"y":2022,"p":12,"tm":"Lions","pl":"Jameson Williams","pos":"WR","s":"OFF","col":"Alabama","conf":"SEC"},{"y":2022,"p":13,"tm":"Eagles","pl":"Jordan Davis","pos":"DT","s":"DEF","col":"Georgia","conf":"SEC"},{"y":2022,"p":14,"tm":"Ravens","pl":"Kyle Hamilton","pos":"S","s":"DEF","col":"Notes Dame","conf":"Independent"},{"y":2022,"p":15,"tm":"Texans","pl":"Kenyon Green","pos":"G","s":"OFF","col":"Texas A&M","conf":"SEC"},{"y":2022,"p":16,"tm":"Commanders","pl":"Jahon Dotson","pos":"WR","s":"OFF","col":"PSU","conf":"Big Ten"},{"y":2022,"p":17,"tm":"Chargers","pl":"Zion Johnson","pos":"G","s":"OFF","col":"Boston College","conf":"ACC"},{"y":2022,"p":18,"tm":"Titans","pl":"Treylon Burks","pos":"WR","s":"OFF","col":"Arkansas","conf":"SEC"},{"y":2022,"p":19,"tm":"Saints","pl":"Trevor Penning","pos":"T","s":"OFF","col":"UNI","conf":"Other"},{"y":2022,"p":20,"tm":"Steelers","pl":"Kenny Pickett","pos":"QB","s":"OFF","col":"Pittsburgh","conf":"ACC"},{"y":2022,"p":21,"tm":"Chiefs","pl":"Trent McDuffie","pos":"CB","s":"DEF","col":"Washington","conf":"Big Ten"},{"y":2022,"p":22,"tm":"Packers","pl":"Quay Walker","pos":"LB","s":"DEF","col":"Georgia","conf":"SEC"},{"y":2022,"p":23,"tm":"Bills","pl":"Kaiir Elam","pos":"CB","s":"DEF","col":"Florida","conf":"SEC"},{"y":2022,"p":24,"tm":"Cowboys","pl":"Tyler Smith","pos":"T","s":"OFF","col":"Tulsa","conf":"Other"},{"y":2022,"p":25,"tm":"Ravens","pl":"Tyler Linderbaum","pos":"C","s":"OFF","col":"Iowa","conf":"Big Ten"},{"y":2022,"p":26,"tm":"Jets","pl":"Jermaine Johnson","pos":"DE","s":"DEF","col":"FSU","conf":"ACC"},{"y":2022,"p":27,"tm":"Jaguars","pl":"Devin Lloyd","pos":"LB","s":"DEF","col":"Utah","conf":"Big 12"},{"y":2022,"p":28,"tm":"Packers","pl":"Devonte Wyatt","pos":"DT","s":"DEF","col":"Georgia","conf":"SEC"},{"y":2022,"p":29,"tm":"Patriots","pl":"Cole Strange","pos":"T","s":"OFF","col":"Chatanooga","conf":"Other"},{"y":2022,"p":30,"tm":"Chiefs","pl":"George Kaladis","pos":"DE","s":"DEF","col":"Purdue","conf":"Big Ten"},{"y":2022,"p":31,"tm":"Bengals","pl":"Daxton Hill","pos":"S","s":"DEF","col":"Michigan","conf":"Big Ten"},{"y":2022,"p":32,"tm":"Vikings","pl":"Lewis Sine","pos":"S","s":"DEF","col":"Georgia","conf":"SEC"},{"y":2023,"p":1,"tm":"Panthers","pl":"Bryce Young","pos":"QB","s":"OFF","col":"Alabama","conf":"SEC"},{"y":2023,"p":2,"tm":"Texans","pl":"CJ Stroud","pos":"QB","s":"OFF","col":"Ohio State","conf":"Big Ten"},{"y":2023,"p":3,"tm":"Texans","pl":"Will Anderson","pos":"DE","s":"DEF","col":"Alabama","conf":"SEC"},{"y":2023,"p":4,"tm":"Colts","pl":"Anthony Richardson","pos":"QB","s":"OFF","col":"Florida","conf":"SEC"},{"y":2023,"p":5,"tm":"Seahawks","pl":"Devon Witherspoon","pos":"CB","s":"DEF","col":"Illinois","conf":"Big Ten"},{"y":2023,"p":6,"tm":"Cardinals","pl":"Paris Johnson Jr","pos":"T","s":"OFF","col":"Ohio State","conf":"Big Ten"},{"y":2023,"p":7,"tm":"Raiders","pl":"Tyree Wilson","pos":"DE","s":"DEF","col":"Texas Tech","conf":"Big 12"},{"y":2023,"p":8,"tm":"Falcons","pl":"Bijan Robinson","pos":"RB","s":"OFF","col":"Texas","conf":"SEC"},{"y":2023,"p":9,"tm":"Eagles","pl":"Jalen Carter","pos":"DT","s":"DEF","col":"Georgia","conf":"SEC"},{"y":2023,"p":10,"tm":"Bears","pl":"Darnell Wright","pos":"T","s":"OFF","col":"Tennessee","conf":"SEC"},{"y":2023,"p":11,"tm":"Titans","pl":"Peter Skoronski","pos":"G","s":"OFF","col":"Northwestern","conf":"Big Ten"},{"y":2023,"p":12,"tm":"Lions","pl":"Jahmyr Gibbs","pos":"RB","s":"OFF","col":"Alabama","conf":"SEC"},{"y":2023,"p":13,"tm":"Packers","pl":"Lukas Van Ness","pos":"DE","s":"DEF","col":"Iowa","conf":"Big Ten"},{"y":2023,"p":14,"tm":"Steelers","pl":"Broderick Jones","pos":"T","s":"OFF","col":"Georgia","conf":"SEC"},{"y":2023,"p":15,"tm":"Jets","pl":"Will McDonald IV","pos":"LB","s":"DEF","col":"Iowa State","conf":"Big 12"},{"y":2023,"p":16,"tm":"Commanders","pl":"Emmanuel Forbes","pos":"CB","s":"DEF","col":"Mississippi State","conf":"SEC"},{"y":2023,"p":17,"tm":"Patriots","pl":"Christian Gonazales","pos":"CB","s":"DEF","col":"Oregon","conf":"Big Ten"},{"y":2023,"p":18,"tm":"Lions","pl":"Jack Campbell","pos":"LB","s":"DEF","col":"Iowa","conf":"Big Ten"},{"y":2023,"p":19,"tm":"Buccaneers","pl":"Calijah Kancey","pos":"DT","s":"DEF","col":"Pittsburgh","conf":"ACC"},{"y":2023,"p":20,"tm":"Seahawks","pl":"Jaxon Smith-Njigba","pos":"WR","s":"OFF","col":"Ohio State","conf":"Big Ten"},{"y":2023,"p":21,"tm":"Chargers","pl":"Quentin Johnston","pos":"WR","s":"OFF","col":"TCU","conf":"Big 12"},{"y":2023,"p":22,"tm":"Ravens","pl":"Zay Flowers","pos":"WR","s":"OFF","col":"Boston College","conf":"ACC"},{"y":2023,"p":23,"tm":"Vikings","pl":"Jordan Addison","pos":"WR","s":"OFF","col":"USC","conf":"Big Ten"},{"y":2023,"p":24,"tm":"Giants","pl":"Diante Banks","pos":"CB","s":"DEF","col":"Maryland","conf":"Big Ten"},{"y":2023,"p":25,"tm":"Bills","pl":"Dalton Kincaid","pos":"TE","s":"OFF","col":"Utah","conf":"Big 12"},{"y":2023,"p":26,"tm":"Cowboys","pl":"Mazi Smith","pos":"DT","s":"DEF","col":"Michigan","conf":"Big Ten"},{"y":2023,"p":27,"tm":"Jaguars","pl":"Anton Harrison","pos":"T","s":"OFF","col":"Oklahoma","conf":"SEC"},{"y":2023,"p":28,"tm":"Bengals","pl":"Myles Murphy","pos":"DE","s":"DEF","col":"Clemson","conf":"ACC"},{"y":2023,"p":29,"tm":"Saints","pl":"Bryan Bresee","pos":"DT","s":"DEF","col":"Clemson","conf":"ACC"},{"y":2023,"p":30,"tm":"Eagles","pl":"Nolan Smith","pos":"DE","s":"DEF","col":"Georgia","conf":"SEC"},{"y":2023,"p":31,"tm":"Chiefs","pl":"Felix Anudike-Uzomah","pos":"DE","s":"DEF","col":"Kansas State","conf":"Big 12"},{"y":2024,"p":1,"tm":"Bears","pl":"Caleb Williams","pos":"QB","s":"OFF","col":"USC","conf":"Big Ten"},{"y":2024,"p":2,"tm":"Commanders","pl":"Jayden Daniels","pos":"QB","s":"OFF","col":"LSU","conf":"SEC"},{"y":2024,"p":3,"tm":"Patriots","pl":"Drake Maye","pos":"QB","s":"OFF","col":"UNC","conf":"ACC"},{"y":2024,"p":4,"tm":"Cardinals","pl":"Marvin Harrison","pos":"WR","s":"OFF","col":"Ohio State","conf":"Big Ten"},{"y":2024,"p":5,"tm":"Chargers","pl":"Joe Alt","pos":"OL","s":"OFF","col":"Notre Dame","conf":"Independent"},{"y":2024,"p":6,"tm":"Giants","pl":"Malik Nabers","pos":"WR","s":"OFF","col":"LSU","conf":"SEC"},{"y":2024,"p":7,"tm":"Titans","pl":"JC Latham","pos":"OL","s":"OFF","col":"Alabama","conf":"SEC"},{"y":2024,"p":8,"tm":"Falcons","pl":"Michael Penix Jr","pos":"QB","s":"OFF","col":"Washington","conf":"Big Ten"},{"y":2024,"p":9,"tm":"Bears","pl":"Rome Odunze","pos":"WR","s":"OFF","col":"Washington","conf":"Big Ten"},{"y":2024,"p":10,"tm":"Vikings","pl":"JJ McCarthy","pos":"QB","s":"OFF","col":"Michigan","conf":"Big Ten"},{"y":2024,"p":11,"tm":"Jets","pl":"Olumuyiwa Fashanu","pos":"OL","s":"OFF","col":"PSU","conf":"Big Ten"},{"y":2024,"p":12,"tm":"Broncos","pl":"Bo Nix","pos":"QB","s":"OFF","col":"Oregon","conf":"Big Ten"},{"y":2024,"p":13,"tm":"Raiders","pl":"Brock Bowers","pos":"TE","s":"OFF","col":"Georgia","conf":"SEC"},{"y":2024,"p":14,"tm":"Saints","pl":"Taliese Fuaga","pos":"OL","s":"OFF","col":"Oregon State","conf":"Other"},{"y":2024,"p":15,"tm":"Colts","pl":"Laiatu Latu","pos":"DL","s":"DEF","col":"UCLA","conf":"Big Ten"},{"y":2024,"p":16,"tm":"Seahawks","pl":"Byron Murphy","pos":"DL","s":"DEF","col":"Texas","conf":"SEC"},{"y":2024,"p":17,"tm":"Vikings","pl":"Dallas Turner","pos":"DL","s":"DEF","col":"Alabama","conf":"SEC"},{"y":2024,"p":18,"tm":"Bengals","pl":"Amarius Mims","pos":"OL","s":"OFF","col":"Oklahoma","conf":"SEC"},{"y":2024,"p":19,"tm":"Rams","pl":"Jared Verse","pos":"DL","s":"DEF","col":"Florida State","conf":"ACC"},{"y":2024,"p":20,"tm":"Steelers","pl":"Troy Fautanu","pos":"OL","s":"OFF","col":"Washington","conf":"Big Ten"},{"y":2024,"p":21,"tm":"Dolphins","pl":"Chop Robinson","pos":"DL","s":"DEF","col":"PSU","conf":"Big Ten"},{"y":2024,"p":22,"tm":"Eagles","pl":"Quinyon Mitchell","pos":"CB","s":"DEF","col":"Toledo","conf":"Other"},{"y":2024,"p":23,"tm":"Jaguars","pl":"Brian Thomas Jr","pos":"WR","s":"OFF","col":"LSU","conf":"SEC"},{"y":2024,"p":24,"tm":"Lions","pl":"Terrion Arnold","pos":"CB","s":"DEF","col":"Alabama","conf":"SEC"},{"y":2024,"p":25,"tm":"Packers","pl":"Jordan Morgan","pos":"OL","s":"OFF","col":"Arizona","conf":"Big 12"},{"y":2024,"p":26,"tm":"Buccaneers","pl":"Graham Barton","pos":"OL","s":"OFF","col":"Duke","conf":"ACC"},{"y":2024,"p":27,"tm":"Cardinals","pl":"Darius Robinson","pos":"DL","s":"DEF","col":"Missouri","conf":"SEC"},{"y":2024,"p":28,"tm":"Chiefs","pl":"Xavier Worthy","pos":"WR","s":"OFF","col":"Texas","conf":"SEC"},{"y":2024,"p":29,"tm":"Cowboys","pl":"Tyler Guyton","pos":"OL","s":"OFF","col":"Oklahoma","conf":"SEC"},{"y":2024,"p":30,"tm":"Ravens","pl":"Nate Wiggins","pos":"CB","s":"DEF","col":"Clemson","conf":"ACC"},{"y":2024,"p":31,"tm":"49ers","pl":"Ricky Pearsall","pos":"WR","s":"OFF","col":"Florida","conf":"SEC"},{"y":2024,"p":32,"tm":"Carolina","pl":"Xavier Legette","pos":"WR","s":"OFF","col":"South Carolina","conf":"SEC"},{"y":2025,"p":1,"tm":"Titans","pl":"Cam Ward","pos":"QB","s":"OFF","col":"Miami","conf":"ACC"},{"y":2025,"p":2,"tm":"Jaguars","pl":"Travis Hunter","pos":"CB","s":"DEF","col":"Colorado","conf":"Big 12"},{"y":2025,"p":3,"tm":"Giants","pl":"Abdul Carter","pos":"DE","s":"DEF","col":"Penn State","conf":"Big Ten"},{"y":2025,"p":4,"tm":"Patriots","pl":"Will Campbell","pos":"OT","s":"OFF","col":"LSU","conf":"SEC"},{"y":2025,"p":5,"tm":"Browns","pl":"Mason Graham","pos":"DT","s":"DEF","col":"Michigan","conf":"Big Ten"},{"y":2025,"p":6,"tm":"Raiders","pl":"Ashton Jeanty","pos":"RB","s":"OFF","col":"Boise State","conf":"Mountain West"},{"y":2025,"p":7,"tm":"Jets","pl":"Armand Membou","pos":"OT","s":"OFF","col":"Missouri","conf":"SEC"},{"y":2025,"p":8,"tm":"Panthers","pl":"Tetairoa McMillan","pos":"WR","s":"OFF","col":"Arizona","conf":"Big 12"},{"y":2025,"p":9,"tm":"Saints","pl":"Kelvin Banks","pos":"OT","s":"OFF","col":"Texas","conf":"SEC"},{"y":2025,"p":10,"tm":"Bears","pl":"Colston Loveland","pos":"TE","s":"OFF","col":"Michigan","conf":"Big Ten"},{"y":2025,"p":11,"tm":"49ers","pl":"Mykel Williams","pos":"DE","s":"DEF","col":"Georgia","conf":"SEC"},{"y":2025,"p":12,"tm":"Cowboys","pl":"Tyler Booker","pos":"G","s":"OFF","col":"Alabama","conf":"SEC"},{"y":2025,"p":13,"tm":"Dolphins","pl":"Kenneth Grant","pos":"DT","s":"DEF","col":"Michigan","conf":"Big Ten"},{"y":2025,"p":14,"tm":"Colts","pl":"Tyler Warren","pos":"TE","s":"OFF","col":"Penn State","conf":"Big Ten"},{"y":2025,"p":15,"tm":"Falcons","pl":"Jalon Walker","pos":"LB","s":"DEF","col":"Georgia","conf":"SEC"},{"y":2025,"p":16,"tm":"Cardinals","pl":"Walter Nolen","pos":"DT","s":"DEF","col":"Ole Miss","conf":"SEC"},{"y":2025,"p":17,"tm":"Bengals","pl":"Shemar Stewart","pos":"DE","s":"DEF","col":"Texas A&M","conf":"SEC"},{"y":2025,"p":18,"tm":"Seahawks","pl":"Grey Zabel","pos":"G","s":"OFF","col":"North Dakota State","conf":"Other"},{"y":2025,"p":19,"tm":"Buccaneers","pl":"Emeka Egbuka","pos":"WR","s":"OFF","col":"Ohio State","conf":"Big Ten"},{"y":2025,"p":20,"tm":"Broncos","pl":"Jahdae Barron","pos":"CB","s":"DEF","col":"Texas","conf":"SEC"},{"y":2025,"p":21,"tm":"Steelers","pl":"Derrick Harmon","pos":"DT","s":"DEF","col":"Oregon","conf":"Big Ten"},{"y":2025,"p":22,"tm":"Chargers","pl":"Omarion Hampton","pos":"RB","s":"OFF","col":"UNC","conf":"ACC"},{"y":2025,"p":23,"tm":"Packers","pl":"Matthew Golden","pos":"WR","s":"OFF","col":"Texas","conf":"SEC"},{"y":2025,"p":24,"tm":"Vikings","pl":"Donovan Jackson","pos":"G","s":"OFF","col":"Ohio State","conf":"Big Ten"},{"y":2025,"p":25,"tm":"Giants","pl":"Jaxson Dart","pos":"QB","s":"OFF","col":"Ole Miss","conf":"SEC"},{"y":2025,"p":26,"tm":"Falcons","pl":"James Pearce","pos":"DE","s":"DEF","col":"Tennessee","conf":"SEC"},{"y":2025,"p":27,"tm":"Ravens","pl":"Malaki Starks","pos":"S","s":"DEF","col":"Georgia","conf":"SEC"},{"y":2025,"p":28,"tm":"Lions","pl":"Tyleik Williams","pos":"DT","s":"DEF","col":"Ohio State","conf":"Big Ten"},{"y":2025,"p":29,"tm":"Commanders","pl":"Josh Connerly","pos":"OT","s":"OFF","col":"Oregon","conf":"Big Ten"},{"y":2025,"p":30,"tm":"Bills","pl":"Maxwell Hairston","pos":"CB","s":"DEF","col":"Kentucky","conf":"SEC"},{"y":2025,"p":31,"tm":"Eagles","pl":"Jihaad Campbell","pos":"LB","s":"DEF","col":"Alabama","conf":"SEC"},{"y":2025,"p":32,"tm":"Chiefs","pl":"Josh Simmons","pos":"OT","s":"OFF","col":"Ohio State","conf":"Big Ten"}];
+
+const HGC = {"2017":{"Eric":"DODODODODDDODDDDDDOODDODDDDDDDDD","Javi":"DDDODOOODDDOOOOODDDDDODOOOOOOOOO","Joe":"DDODOOODOOOODDOODOOODDODDDDDDOOO","Keyla":"DOODOODDDDDOODDDODOODDOOODOODOOO","Nick":"_____ODODODOODDOODDOODODDDODODOD","Paddy":"ODODDDOODODODDDDODODDDDDODDODODO","Pat":"ODOOOODDODOODODDDDODDDDDDDDDDDDD"},"2018":{"Ben":"OOOOOOODDOODDDDDDDDDDODODDDDDOOO","Brandon":"OOODOOODDODDDDDODDODODOOODDOOODO","Daren":"_ODDOOOOODDODDOOODDDOODDDDDDDDOO","Eric":"OOODODOODOODDDDDODOOOOOOODOOOOOO","Javi":"OODDOOODDODODODDDOODODDOOODOOOOO","Joe":"OOODDOOODODDOODODDODDODDODOOOOOO","Paddy":"ODODOOODOODDDODDODODOOOOOODDODDO","Pat":"OOODOOOODODDOOOODDODOODDODDODDOO","Ryan":"OOODODODDDODDDDDODOODOODOODDOOOO","Ryan Miller":"OOODOOODDODDDDDODDDDDODOODDOOOOO"},"2019":{"Brandon":"ODDOOOOOOOODODOODOODOOOOODOOOODD","Eric":"ODDDODDODOOOODOOODDDOOODDOODOOOD","Javi":"DODDDDOOOODOODOOOOODODDDOOODDDOD","Jill":"DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD","Joe":"ODODDOODDDOODOODDOOODDOOODDODOOO","Lizzy":"ODOODDDODDDDODDDDDODDDOOODDODODO","Paddy":"ODDDDDOOOODDODOODODDDOODDDDODODO","Pat":"ODODODODODODODODODODODODODODODOD","Ryan":"ODOOOOOODOODOODODDDODODODDOOOOOD"},"2020":{"Brandon":"ODOOOOOOOOOOOODODODDOODDODDDDDDO","Charlie":"ODOOOOOODOOOOODDODDDOOODODDDDDDD","Dickey":"______OODOOO____________________","Eric":"ODOOOOOOOOOOOOODODOOODOOOODOODDO","Jill":"DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD","Joe":"ODOOOOOODDOOODOODOOOOOODODDDOODD","Mark":"DODODDODODODODODDDDOOOODDDDDDDOO","Mel":"OOOOODOOOOODOODOOOOOOOODOODDODDD","Mitch":"ODOOODDOOOODODDDOODOODODODDDOOOD","Paddy":"ODODOODOOOOOODODDDODOOODODODODDO","Pat":"DODODODODODODODODODODODODODODODO","Ryan":"ODOODODDDOOOOOODDODOODOODDDDOODD"},"2021":{"Charlie":"OOOOOODOOOODDOODDDOOODDOOOOOOOOO","DE":"DOOOODDOODODO___________________","Eric":"OOOOOOODOOODOOOOODODDDDODODOODOO","Javi":"DDDDDDDOODOODDODOODDDODDOOODODDD","Jill":"DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD","Joe":"OOOOOODDOODOOOOODDODOODDODDOODDD","Lizzy":"DOODDOOODODOODOODDODD___________","Mel":"OOOOOOODDOOODOOOODODODDOOOODDDDD","Mitch":"OOOOOODDDOODOOODODOOODDOODODDDDD","Paddy":"OOOOOODOOOOOOOODDDODDDDODDODDODO","Pat":"OOODDOOODDOODDODOOOOODDDODDDODOD","Ryan":"OOOOOOODOOODOOODOOOOOODODDDDOODD"},"2022":{"DE":"OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO","Eric":"OODOOOOOOOODODDDOOOOOODDOOOOOOOO","Joe":"DODOODOODDDDDODOODOOODOODDODDODO","Mark":"ODDOOOOODOOOOODOODOODDOOOOOOOOOO","Mitch":"DDOOO___________________________","Paddy":"DDOODOODDOODODO_________________","Pat":"ODODOD__________________________"},"2023":{"Eric":"OODODDDODOODODDDDDOOOOODOODDDDO_","Javi":"DDDDODDDOOODDDOODOODDDOOODDOOOD_","Joe":"OODODOODOODOOODOOOOODODOOODODOD_","Mel":"OOOODDDODOODOODODOOODOOOOODDODD_","Mitch":"OODODODODOODOODDODDOOODDOODDDDO_","Paddy":"ODDODDOODOODODDDODODOODDOOODDDO_","Ryan":"_______ODDODOODOODOOODDODOOODOO_"},"2024":{"Dickey":"_________________DOODODDDDDDDDDD","Eric":"OOOOOOODOOODDODDDOOOODODDDDOODDO","Jill":"DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD","Joe":"OOOOOOOOOODODOODOOOOOODODDDDODDD","Paddy":"OOOOODDDOODDODDDOODOODDDDDOOOODD","Pat":"OOOOOOODOOOOOODDOOOODDODDDODODOO","Ryan":"_____________OODODDODODODODDODDO","Scott":"OOOOOOODOOOODDODOODDOOODODDDOODO"},"2025":{"Charlie":"________ODOODDOODDDOODDDODOOOODO","DE":"ODDOOOOODDOODDDOODODDDOODDODODDO","Eric":"ODDOOOODOOOOODDDDODODOODODDOODDD","Joe":"ODDOODOOODOODOOOOODOOODOOODDODOD","Mel":"ODDOOOOOODOOODOODOOOOODDOODODDOD","Mitch":"______________________DDOODOOOOD","Paddy":"ODOODODDDDDODDDODDOO____________","Ryan":"______________________ODOODODDDD"}};
+
+function parseGuesses() {
+  const g = {};
+  for (const [yr, players] of Object.entries(HGC)) {
+    for (const [name, str] of Object.entries(players)) {
+      for (let i = 0; i < 32; i++) {
+        const c = str[i];
+        if (c === "O") g[yr + "-" + (i+1) + "-" + name] = "OFF";
+        else if (c === "D") g[yr + "-" + (i+1) + "-" + name] = "DEF";
+      }
+    }
+  }
+  return g;
+}
+
+const AP = [...new Set(Object.values(HGC).flatMap(yr => Object.keys(yr)))].sort();
+
+const NFL_TEAMS = ["49ers","Bears","Bengals","Bills","Broncos","Browns","Buccaneers","Cardinals",
+"Chargers","Chiefs","Colts","Commanders","Cowboys","Dolphins","Eagles","Falcons","Giants",
+"Jaguars","Jets","Lions","Packers","Panthers","Patriots","Raiders","Rams","Ravens",
+"Saints","Seahawks","Steelers","Texans","Titans","Vikings"];
+
+const DEFAULT_ORDER = ["Titans","Browns","Giants","Patriots","Jaguars","Raiders","Jets","Panthers",
+"Saints","Bears","49ers","Cowboys","Dolphins","Colts","Falcons","Cardinals","Bengals",
+"Seahawks","Buccaneers","Broncos","Steelers","Chargers","Packers","Vikings","Bills",
+"Lions","Ravens","Commanders","Eagles","Falcons","Chiefs","Chiefs"];
+
+function bbCI(c, t) {
+  const a = 1+c, b = 1+t-c, m = a/(a+b);
+  const sd = Math.sqrt((a*b)/((a+b)**2*(a+b+1)));
+  return { mean: m, low: Math.max(0,m-1.96*sd), high: Math.min(1,m+1.96*sd) };
+}
+
+const C = {
+  off:"#f59e0b", def:"#3b82f6", offDk:"#d97706", defDk:"#2563eb",
+  green:"#10b981", red:"#ef4444", bg:"#0f172a", card:"#1e293b",
+  cardAlt:"#334155", text:"#f1f5f9", dim:"#94a3b8", border:"#475569",
+  gold:"#fbbf24"
+};
+
+const iS = {background:"#0f172a", border:"1px solid "+C.border, borderRadius:10, padding:"12px 14px", color:C.text, fontSize:15, flex:1, fontFamily:"Outfit,sans-serif", outline:"none"};
+const bP = {background:"linear-gradient(135deg,#f59e0b,#d97706)", color:"#0f172a", border:"none", borderRadius:10, padding:"12px 20px", fontWeight:800, fontSize:15, cursor:"pointer", fontFamily:"Outfit,sans-serif"};
+const bD = {background:"#ef444422", color:C.red, border:"1px solid #ef444444", borderRadius:8, padding:"8px 14px", fontWeight:700, cursor:"pointer", fontFamily:"Outfit,sans-serif"};
+
+// ─── ROOM ID ───
+const ROOM_ID = "draft-2026";
+
+
+const ROOM_ID = "draft-2026";
+
+function App() {
+  const DY = 2026;
+  const [view, setView] = useState("home");
+  const [lr, setLr] = useState([]);
+  const [lg, setLg] = useState({});
+  const [cp, setCp] = useState(1);
+  const [parts, setParts] = useState([]);
+  const [nn, setNn] = useState("");
+  const [sg, setSg] = useState("");
+  const [cT, setCT] = useState("");
+  const [cPl, setCPl] = useState("");
+  const [cPo, setCPo] = useState("");
+  const [cCol, setCCol] = useState("");
+  const [cS, setCS] = useState("");
+  const [draftOrder, setDraftOrder] = useState(DEFAULT_ORDER);
+  const [editingOrder, setEditingOrder] = useState(false);
+  const [hg] = useState(parseGuesses);
+  const [fbReady, setFbReady] = useState(false);
+  const [syncStatus, setSyncStatus] = useState("connecting...");
+  const [lastSync, setLastSync] = useState(null);
+  
+
+  // ─── Firebase init + real-time listeners (compat SDK) ───
+  useEffect(() => {
+    let cancelled = false;
+    const unsubs = [];
+    
+    (async () => {
+      try {
+        const roomRef = db.collection("rooms").doc(ROOM_ID);
+        
+        // Check if room exists, if not create it
+        const roomSnap = await roomRef.get();
+        if (!roomSnap.exists) {
+          await roomRef.set({
+            results: [], currentPick: 1, participants: [], draftOrder: DEFAULT_ORDER, updatedAt: Date.now()
+          });
+        }
+
+        // Listen to room doc
+        const unsub1 = roomRef.onSnapshot((snap) => {
+          if (cancelled) return;
+          const d = snap.data();
+          if (d) {
+            if (d.results) setLr(d.results);
+            if (d.currentPick) setCp(d.currentPick);
+            if (d.participants) setParts(d.participants);
+            if (d.draftOrder) setDraftOrder(d.draftOrder);
+            setLastSync(Date.now());
+            setSyncStatus("synced");
+          }
+        });
+        unsubs.push(unsub1);
+
+        // Listen to all guesses
+        const unsub2 = db.collection("rooms").doc(ROOM_ID).collection("guesses").onSnapshot((snap) => {
+          if (cancelled) return;
+          const allGuesses = {};
+          snap.forEach(d => {
+            const data = d.data();
+            if (data.picks) {
+              Object.entries(data.picks).forEach(([pickKey, side]) => {
+                allGuesses[d.id + "-" + pickKey] = side;
+              });
+            }
+          });
+          setLg(allGuesses);
+          setLastSync(Date.now());
+        });
+        unsubs.push(unsub2);
+
+        if (!cancelled) setFbReady(true);
+      } catch(e) {
+        console.error("Firebase init error:", e);
+        setSyncStatus("error: " + e.message);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+      unsubs.forEach(u => u());
+    };
+  }, []);
+
+  // ─── Firebase write helpers (compat SDK) ───
+  const saveRoom = useCallback(async (results, currentPick, participants, order) => {
+    try {
+      await db.collection("rooms").doc(ROOM_ID).set({
+        results, currentPick, participants, draftOrder: order, updatedAt: Date.now()
+      });
+      setSyncStatus("synced");
+    } catch(e) { setSyncStatus("write error"); console.error(e); }
+  }, []);
+
+  const saveGuess = useCallback(async (name, pickNum, side) => {
+    try {
+      const gRef = db.collection("rooms").doc(ROOM_ID).collection("guesses").doc(name);
+      const snap = await gRef.get();
+      const existing = snap.exists ? snap.data().picks || {} : {};
+      existing[String(pickNum)] = side;
+      await gRef.set({ picks: existing });
+      setSyncStatus("synced");
+    } catch(e) { setSyncStatus("write error"); console.error(e); }
+  }, []);
+
+  // ─── Actions ───
+  const addP = async () => {
+    const n = nn.trim();
+    if (n && !parts.includes(n)) {
+      const np = [...parts, n].sort();
+      setNn("");
+      await saveRoom(lr, cp, np, draftOrder);
+    }
+  };
+  const rmP = async (n) => {
+    const np = parts.filter(x => x !== n);
+    await saveRoom(lr, cp, np, draftOrder);
+  };
+
+  const logPick = async () => {
+    if (!cS) return;
+    const pick = {pick:cp, team:cT||draftOrder[cp-1]||"", player:cPl, pos:cPo, side:cS, college:cCol};
+    const nr = [...lr, pick];
+    const nc = cp + 1;
+    setCT(""); setCPl(""); setCPo(""); setCS(""); setCCol("");
+    await saveRoom(nr, nc, parts, draftOrder);
+  };
+
+  const undo = async () => {
+    if (!lr.length) return;
+    const nr = lr.slice(0, -1);
+    const nc = cp - 1;
+    await saveRoom(nr, nc, parts, draftOrder);
+  };
+
+  const setGuess = async (name, pk, side) => {
+    await saveGuess(name, pk, side);
+  };
+
+  const getG = (name, pk) => lg[name + "-" + pk] || null;
+  const isLocked = (pk) => lr.some(r => r.pick === pk);
+
+  const updateDraftOrder = async (idx, team) => {
+    const no = [...draftOrder];
+    no[idx] = team;
+    await saveRoom(lr, cp, parts, no);
+  };
+
+  useEffect(() => {
+    if (cp <= 32 && draftOrder[cp-1] && !cT) {
+      setCT(draftOrder[cp-1]);
+    }
+  }, [cp, draftOrder]);
+
+  // ─── Stats computation (same as before) ───
+  const stats = useMemo(() => {
+    const allR = [...HR];
+    lr.forEach(r => allR.push({y:DY, p:r.pick, tm:r.team, pl:r.player, pos:r.pos, s:r.side, col:r.college||"", conf:""}));
+    const allG = {...hg};
+    Object.entries(lg).forEach(([k, v]) => {
+      const ps2 = k.split("-");
+      const pn = parseInt(ps2[1]);
+      if (lr.some(r => r.pick === pn)) allG[DY + "-" + pn + "-" + ps2[0]] = v;
+    });
+
+    const ps = {};
+    parts.forEach(name => {
+      let c = 0, t = 0;
+      const byY = {};
+      for (let yr = 2017; yr <= DY; yr++) {
+        let yc = 0, yt = 0;
+        for (let p = 1; p <= 32; p++) {
+          const g = allG[yr + "-" + p + "-" + name];
+          const res = allR.find(r => r.y === yr && r.p === p);
+          if (g && res) { t++; yt++; if (g === res.s) { c++; yc++; } }
+        }
+        if (yt > 0) byY[yr] = {c: yc, t: yt, pct: yc/yt};
+      }
+      ps[name] = {c, t, pct: t > 0 ? c/t : 0, bb: bbCI(c, t), byY};
+    });
+
+    const ls = {};
+    parts.forEach(name => {
+      let c = 0, t = 0;
+      lr.forEach(r => { const g = lg[name + "-" + r.pick]; if (g) { t++; if (g === r.side) c++; } });
+      ls[name] = {c, t, pct: t > 0 ? c/t : 0};
+    });
+
+    const pr = {};
+    for (let p = 1; p <= 32; p++) {
+      let o = 0, d = 0;
+      HR.forEach(r => { if (r.p === p) { if (r.s === "OFF") o++; else d++; } });
+      pr[p] = {o, d, t: o+d, op: o/(o+d)};
+    }
+
+    const bd = [], wd = [];
+    parts.forEach(name => {
+      const s = ps[name]; if (!s) return;
+      Object.entries(s.byY).forEach(([yr, ys]) => {
+        if (ys.t >= 10) { bd.push({name, yr, ...ys}); wd.push({name, yr, ...ys}); }
+      });
+    });
+    bd.sort((a, b) => b.pct - a.pct); wd.sort((a, b) => a.pct - b.pct);
+
+    const vr = {};
+    parts.forEach(name => {
+      const s = ps[name]; if (!s) return;
+      const pcts = Object.values(s.byY).filter(y => y.t >= 10).map(y => y.pct);
+      if (pcts.length >= 2) {
+        const mean = pcts.reduce((a, b) => a + b, 0) / pcts.length;
+        vr[name] = Math.sqrt(pcts.reduce((a, p) => a + (p - mean) ** 2, 0) / (pcts.length - 1));
+      }
+    });
+
+    const colStats = {};
+    parts.forEach(name => {
+      allR.forEach(res => {
+        if (!res.col) return;
+        const g = allG[res.y + "-" + res.p + "-" + name];
+        if (g && res.s) {
+          if (!colStats[res.col]) colStats[res.col] = {c:0, t:0};
+          colStats[res.col].t++;
+          if (g === res.s) colStats[res.col].c++;
+        }
+      });
+    });
+
+    const confStats = {};
+    parts.forEach(name => {
+      allR.forEach(res => {
+        if (!res.conf) return;
+        const g = allG[res.y + "-" + res.p + "-" + name];
+        if (g && res.s) {
+          if (!confStats[res.conf]) confStats[res.conf] = {c:0, t:0};
+          confStats[res.conf].t++;
+          if (g === res.s) confStats[res.conf].c++;
+        }
+      });
+    });
+
+    const teamStats = {};
+    parts.forEach(name => {
+      allR.forEach(res => {
+        if (!res.tm) return;
+        const g = allG[res.y + "-" + res.p + "-" + name];
+        if (g && res.s) {
+          if (!teamStats[res.tm]) teamStats[res.tm] = {c:0, t:0, off:0, def:0};
+          teamStats[res.tm].t++;
+          if (g === res.s) teamStats[res.tm].c++;
+          if (res.s === "OFF") teamStats[res.tm].off++; else teamStats[res.tm].def++;
+        }
+      });
+    });
+
+    const ga = {};
+    for (let p = 1; p <= 32; p++) {
+      let c = 0, t = 0;
+      parts.forEach(n => {
+        for (let yr = 2017; yr <= DY; yr++) {
+          const g = allG[yr + "-" + p + "-" + n];
+          const res = allR.find(r => r.y === yr && r.p === p);
+          if (g && res) { t++; if (g === res.s) c++; }
+        }
+      });
+      ga[p] = {c, t, pct: t > 0 ? c/t : 0};
+    }
+
+    const iowaPicks = allR.filter(r => r.col === "Iowa");
+    const iowaByPerson = {};
+    parts.forEach(name => {
+      let c = 0, t = 0;
+      iowaPicks.forEach(res => {
+        const g = allG[res.y + "-" + res.p + "-" + name];
+        if (g && res.s) { t++; if (g === res.s) c++; }
+      });
+      if (t > 0) iowaByPerson[name] = {c, t, pct: c/t};
+    });
+    const iowaTotal = colStats["Iowa"] || {c:0, t:0};
+
+    return {ps, ls, pr, bd, wd, vr, ga, colStats, confStats, teamStats, iowaPicks, iowaByPerson, iowaTotal};
+  }, [lr, lg, parts, hg]);
+
+  // ─── RENDER ───
+  return (
+    <div style={{background:C.bg, color:C.text, minHeight:"100vh", fontFamily:"Outfit,sans-serif"}}>
+
+      <div style={{background:"linear-gradient(135deg,#1e293b 0%,#0f172a 50%,#1e293b 100%)", borderBottom:"2px solid "+C.border, padding:"20px 16px 12px", textAlign:"center"}}>
+        <div style={{fontSize:13, letterSpacing:4, color:C.gold, fontWeight:700, marginBottom:4, fontFamily:"Space Mono,monospace"}}>NFL DRAFT PARTY</div>
+        <h1 style={{margin:0, fontSize:28, fontWeight:900, background:"linear-gradient(135deg,#f59e0b,#ef4444,#3b82f6)", WebkitBackgroundClip:"text", WebkitTextFillColor:"transparent"}}>OFFENSE OR DEFENSE?</h1>
+        <div style={{fontSize:13, color:C.dim, marginTop:4, fontFamily:"Space Mono,monospace"}}>{DY} {"\u2022"} PICK #{cp > 32 ? "DONE" : cp}{lr.length > 0 ? " \u2022 " + lr.length + "/32" : ""}</div>
+        <div style={{fontSize:11, marginTop:4, color: syncStatus === "synced" ? C.green : syncStatus.startsWith("error") ? C.red : C.gold, fontFamily:"Space Mono,monospace"}}>
+          {syncStatus === "synced" ? "\u25cf LIVE" : syncStatus === "connecting..." ? "\u25cb CONNECTING..." : "\u25cf " + syncStatus.toUpperCase()}
+        </div>
+      </div>
+
+      <div style={{display:"flex", gap:8, padding:"12px 16px", background:"#0c1322"}}>
+        {[["Home","home","\ud83c\udfe0"],["Commish","commissioner","\ud83d\udc51"],["Guess","guess","\ud83c\udfaf"],["Stats","dashboard","\ud83d\udcca"]].map(([label, t, emoji]) => (
+          <button key={t} onClick={() => setView(t)} style={{
+            background: view === t ? "linear-gradient(135deg,#f59e0b,#d97706)" : C.card,
+            color: view === t ? "#0f172a" : C.text,
+            border: "1px solid " + (view === t ? "#f59e0b" : C.border),
+            borderRadius:12, padding:"12px 8px", cursor:"pointer", fontWeight:700,
+            fontSize:13, fontFamily:"Outfit,sans-serif", flex:1, minWidth:0,
+            boxShadow: view === t ? "0 4px 20px rgba(245,158,11,.3)" : "none"
+          }}><span style={{fontSize:18}}>{emoji}</span><br/>{label}</button>
+        ))}
+      </div>
+
+      <div style={{padding:16, maxWidth:900, margin:"0 auto"}}>
+
+      {view === "home" && (
+        <div>
+          <Cd t="PARTICIPANTS" e={"\ud83d\udc65"}>
+            <div style={{display:"flex", gap:8, marginBottom:12}}>
+              <input value={nn} onChange={e => setNn(e.target.value)} onKeyDown={e => e.key === "Enter" && addP()} placeholder="Add participant name..." style={iS}/>
+              <button onClick={addP} style={bP}>Add</button>
+            </div>
+            {parts.length === 0 && <div style={{color:C.dim, fontSize:14, padding:"12px 0"}}>No participants yet. Add names to get started!</div>}
+            <div style={{display:"flex", flexWrap:"wrap", gap:8}}>
+              {parts.map(n => (
+                <div key={n} style={{background:C.cardAlt, borderRadius:8, padding:"6px 12px", display:"flex", alignItems:"center", gap:8, fontSize:14}}>
+                  <span style={{fontWeight:600}}>{n}</span>
+                  <button onClick={() => rmP(n)} style={{background:"none", border:"none", color:C.red, cursor:"pointer", fontSize:16, padding:0}}>{"\u00d7"}</button>
+                </div>
+              ))}
+            </div>
+            <div style={{marginTop:12}}>
+              <div style={{fontSize:12, color:C.dim, marginBottom:6}}>Quick add from history:</div>
+              <div style={{display:"flex", flexWrap:"wrap", gap:4}}>
+                {AP.filter(n => !parts.includes(n)).map(n => (
+                  <button key={n} onClick={async () => { const np = [...parts, n].sort(); await saveRoom(lr, cp, np, draftOrder); }}
+                    style={{background:"#1a2332", border:"1px solid "+C.border, borderRadius:6, color:C.dim, padding:"3px 8px", fontSize:12, cursor:"pointer", fontFamily:"Outfit,sans-serif"}}>{n}</button>
+                ))}
+              </div>
+            </div>
+          </Cd>
+
+          <Cd t="DRAFT ORDER" e={"\ud83d\udccb"}>
+            <div style={{fontSize:13, color:C.dim, marginBottom:10}}>Set the picking teams. Update when trades happen!</div>
+            <button onClick={() => setEditingOrder(!editingOrder)} style={{...bP, fontSize:13, padding:"8px 16px", marginBottom:12}}>
+              {editingOrder ? "Done Editing" : "Edit Draft Order"}
+            </button>
+            {editingOrder && (
+              <div style={{display:"grid", gap:4, maxHeight:400, overflowY:"auto"}}>
+                {draftOrder.map((team, i) => (
+                  <div key={i} style={{display:"flex", alignItems:"center", gap:8}}>
+                    <span style={{fontFamily:"Space Mono,monospace", fontSize:12, color:C.dim, width:28, textAlign:"right"}}>#{i+1}</span>
+                    <select value={team} onChange={e => updateDraftOrder(i, e.target.value)}
+                      style={{...iS, flex:1, padding:"8px 10px", fontSize:13, background: i+1 < cp ? C.cardAlt : "#0f172a"}}>
+                      <option value="">-- Select --</option>
+                      {NFL_TEAMS.map(t => <option key={t} value={t}>{t}</option>)}
+                    </select>
+                  </div>
+                ))}
+              </div>
+            )}
+            {!editingOrder && (
+              <div style={{display:"flex", flexWrap:"wrap", gap:4}}>
+                {draftOrder.map((team, i) => (
+                  <span key={i} style={{
+                    fontSize:11, padding:"3px 7px", borderRadius:5, fontFamily:"Space Mono,monospace",
+                    background: i+1 < cp ? C.green+"22" : i+1 === cp ? C.gold+"33" : C.cardAlt,
+                    color: i+1 < cp ? C.green : i+1 === cp ? C.gold : C.dim,
+                    border: i+1 === cp ? "1px solid "+C.gold+"44" : "1px solid transparent"
+                  }}>{i+1}. {team || "?"}</span>
+                ))}
+              </div>
+            )}
+          </Cd>
+
+          <Cd t="HOW IT WORKS" e={"\ud83d\udcd6"}>
+            <div style={{fontSize:14, lineHeight:1.7, color:C.dim}}>
+              <p style={{margin:"0 0 8px"}}><b style={{color:C.gold}}>Real-time multiplayer!</b> Everyone opens this app on their own device. All data syncs live via Firebase.</p>
+              <p style={{margin:"0 0 8px"}}><b style={{color:C.text}}>1.</b> Commissioner adds participants and sets draft order here.</p>
+              <p style={{margin:"0 0 8px"}}><b style={{color:C.text}}>2.</b> Each guesser opens <b style={{color:C.gold}}>Guess</b>, selects their name, taps OFF/DEF. Guess ahead and change anytime until locked.</p>
+              <p style={{margin:"0 0 8px"}}><b style={{color:C.text}}>3.</b> Commissioner logs picks in <b style={{color:C.gold}}>Commish</b> {"\u2014"} this locks guesses for everyone instantly.</p>
+              <p style={{margin:0}}><b style={{color:C.text}}>4.</b> Everyone watches <b style={{color:C.gold}}>Stats</b> update in real time!</p>
+            </div>
+          </Cd>
+
+          {lr.length > 0 && (
+            <Cd t={DY + " PICKS SO FAR"} e={"\ud83d\udcdd"}>
+              <div style={{maxHeight:300, overflowY:"auto"}}>
+                {lr.map((r, i) => (
+                  <div key={i} style={{display:"flex", alignItems:"center", gap:8, padding:"6px 0", borderBottom:"1px solid "+C.border+"22", flexWrap:"wrap"}}>
+                    <span style={{fontFamily:"Space Mono,monospace", fontSize:13, color:C.dim, width:24, textAlign:"right"}}>#{r.pick}</span>
+                    <SB s={r.side}/>
+                    <span style={{fontWeight:600, fontSize:14}}>{r.player}</span>
+                    <span style={{color:C.dim, fontSize:13}}>{r.pos} {"\u2022"} {r.team}{r.college ? " \u2022 " + r.college : ""}</span>
+                  </div>
+                ))}
+              </div>
+            </Cd>
+          )}
+
+          <Cd t="EXPORT DATA" e={"\ud83d\udcbe"}>
+            <div style={{fontSize:13, color:C.dim, marginBottom:10}}>Download a backup of all current draft data.</div>
+            <button onClick={() => {
+              const data = {year:DY, results:lr, guesses:lg, participants:parts, draftOrder, exportedAt: new Date().toISOString()};
+              const blob = new Blob([JSON.stringify(data, null, 2)], {type:"application/json"});
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement("a"); a.href = url; a.download = "draft-" + DY + "-export.json"; a.click();
+              URL.revokeObjectURL(url);
+            }} style={bP}>Export {DY} Data</button>
+          </Cd>
+        </div>
+      )}
+
+      {view === "commissioner" && (
+        <div>
+          <Cd t={"LOG PICK #" + cp} e={"\ud83d\udc51"}>
+            {cp > 32 ? (
+              <div style={{textAlign:"center", padding:20}}>
+                <div style={{fontSize:40, marginBottom:8}}>{"\ud83c\udf89"}</div>
+                <div style={{fontSize:18, fontWeight:700}}>All 32 picks logged!</div>
+                <div style={{color:C.dim, marginTop:4}}>Head to Stats for final results.</div>
+              </div>
+            ) : (
+              <div>
+                {stats.pr[cp] && (
+                  <div style={{background:"#0f172a", borderRadius:10, padding:12, marginBottom:16, border:"1px solid "+C.border+"44"}}>
+                    <div style={{fontSize:12, color:C.dim, marginBottom:6, fontFamily:"Space Mono,monospace"}}>PICK #{cp} HISTORICAL TREND</div>
+                    <div style={{display:"flex", gap:12, alignItems:"center"}}>
+                      <MBr op={stats.pr[cp].op}/>
+                      <span style={{fontSize:13, color:C.dim}}>{stats.pr[cp].o} OFF / {stats.pr[cp].d} DEF in {stats.pr[cp].t} drafts</span>
+                    </div>
+                  </div>
+                )}
+                <div style={{display:"grid", gap:10, marginBottom:16}}>
+                  <div style={{display:"flex", gap:8, alignItems:"center"}}>
+                    <span style={{fontSize:13, color:C.dim, width:60}}>Team:</span>
+                    <select value={cT} onChange={e => setCT(e.target.value)} style={{...iS, padding:"10px 12px"}}>
+                      <option value="">-- Select --</option>
+                      {NFL_TEAMS.map(t => <option key={t} value={t}>{t}</option>)}
+                    </select>
+                  </div>
+                  <input value={cPl} onChange={e => setCPl(e.target.value)} placeholder="Player name" style={iS}/>
+                  <div style={{display:"flex", gap:8}}>
+                    <input value={cPo} onChange={e => setCPo(e.target.value)} placeholder="Position" style={{...iS, flex:"0 0 120px"}}/>
+                    <input value={cCol} onChange={e => setCCol(e.target.value)} placeholder="College" style={iS}/>
+                  </div>
+                  <div style={{display:"flex", gap:10}}>
+                    <SBtn s="OFF" sel={cS === "OFF"} onClick={() => setCS("OFF")} lg={true}/>
+                    <SBtn s="DEF" sel={cS === "DEF"} onClick={() => setCS("DEF")} lg={true}/>
+                  </div>
+                </div>
+                <button onClick={logPick} disabled={!cS} style={{...bP, width:"100%", padding:14, opacity:cS ? 1 : 0.4, fontSize:16, fontWeight:800}}>
+                  {"LOG PICK #" + cp + " \u2713"}
+                </button>
+              </div>
+            )}
+          </Cd>
+          {lr.length > 0 && (
+            <Cd t="RECENT PICKS" e={"\ud83d\udccb"}>
+              {[...lr].reverse().slice(0, 5).map((r, i) => (
+                <div key={i} style={{display:"flex", alignItems:"center", gap:8, padding:"6px 0", borderBottom:"1px solid "+C.border+"22"}}>
+                  <span style={{fontFamily:"Space Mono,monospace", fontSize:13, color:C.dim, width:24, textAlign:"right"}}>#{r.pick}</span>
+                  <SB s={r.side}/><span style={{fontWeight:600, fontSize:14}}>{r.player || "\u2014"}</span>
+                  <span style={{color:C.dim, fontSize:13}}>{r.pos} {"\u2022"} {r.team}{r.college ? " \u2022 "+r.college : ""}</span>
+                </div>
+              ))}
+              <button onClick={undo} style={{...bD, marginTop:12, fontSize:13}}>Undo Last Pick</button>
+            </Cd>
+          )}
+          {parts.length > 0 && cp <= 32 && (
+            <Cd t={"GUESSES FOR PICK #" + cp} e={"\ud83d\udd2e"}>
+              {parts.map(n => {
+                const g = getG(n, cp);
+                return (
+                  <div key={n} style={{display:"flex", alignItems:"center", justifyContent:"space-between", padding:"6px 0", borderBottom:"1px solid "+C.border+"22"}}>
+                    <span style={{fontWeight:600, fontSize:14}}>{n}</span>
+                    {g ? <SB s={g}/> : <span style={{color:C.dim, fontSize:13, fontStyle:"italic"}}>No guess</span>}
+                  </div>
+                );
+              })}
+            </Cd>
+          )}
+        </div>
+      )}
+
+      {view === "guess" && (
+        <div>
+          <Cd t="SELECT YOUR NAME" e={"\ud83c\udfaf"}>
+            <div style={{display:"flex", flexWrap:"wrap", gap:8}}>
+              {parts.length === 0 && <div style={{color:C.dim, fontSize:14}}>No participants {"\u2014"} waiting for commissioner to add names.</div>}
+              {parts.map(n => (
+                <button key={n} onClick={() => setSg(n)} style={{
+                  background: sg === n ? "linear-gradient(135deg,#f59e0b,#d97706)" : C.cardAlt,
+                  color: sg === n ? "#0f172a" : C.text,
+                  border: "1px solid " + (sg === n ? "#f59e0b" : C.border),
+                  borderRadius:10, padding:"10px 16px", cursor:"pointer", fontWeight:700, fontSize:15, fontFamily:"Outfit,sans-serif"
+                }}>{n}</button>
+              ))}
+            </div>
+          </Cd>
+          {sg && (
+            <Cd t={sg.toUpperCase() + " GUESSES"} e={"\ud83c\udfc8"}>
+              <div style={{fontSize:13, color:C.dim, marginBottom:12}}>Tap OFF or DEF. Locked picks show results. Guess ahead!</div>
+              <div style={{display:"grid", gap:6}}>
+                {Array.from({length:32}, (_, i) => i + 1).map(pk => {
+                  const lk = isLocked(pk); const g = getG(sg, pk);
+                  const res = lr.find(r => r.pick === pk);
+                  const ok = lk && res && g ? g === res.side : null;
+                  const tm = draftOrder[pk-1] || "";
+                  return (
+                    <div key={pk} style={{
+                      display:"flex", alignItems:"center", gap:8, padding:"8px 10px",
+                      background: lk ? (ok === true ? "#10b98118" : ok === false ? "#ef444418" : C.card) : pk === cp ? "#f59e0b12" : C.card,
+                      borderRadius:10,
+                      border: "1px solid " + (pk === cp ? "#f59e0b44" : ok === true ? "#10b98133" : ok === false ? "#ef444433" : C.border+"33"),
+                      opacity: lk ? 0.85 : 1
+                    }}>
+                      <span style={{fontFamily:"Space Mono,monospace", fontSize:12, color:C.dim, width:28, textAlign:"right", flexShrink:0}}>#{pk}</span>
+                      <span style={{fontSize:12, color:C.dim, width:70, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap"}}>{tm}</span>
+                      {lk && res && <SB s={res.side} sm={true}/>}
+                      <div style={{display:"flex", gap:6, marginLeft:"auto"}}>
+                        {lk ? (
+                          g ? <span style={{fontSize:13, fontWeight:700, color: ok ? C.green : C.red}}>{g} {ok ? "\u2713" : "\u2717"}</span>
+                            : <span style={{fontSize:12, color:C.dim, fontStyle:"italic"}}>{"\u2014"}</span>
+                        ) : (
+                          <>
+                            <SBtn s="OFF" sel={g === "OFF"} onClick={() => setGuess(sg, pk, "OFF")}/>
+                            <SBtn s="DEF" sel={g === "DEF"} onClick={() => setGuess(sg, pk, "DEF")}/>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </Cd>
+          )}
+        </div>
+      )}
+
+      {view === "dashboard" && <Dash stats={stats} parts={parts} lr={lr} lg={lg} DY={DY} cp={cp}/>}
+
+      </div>
+    </div>
+  );
+}
+
+function Dash({stats, parts, lr, lg, DY, cp}) {
+  const [dt, setDt] = useState("live");
+
+  if (!parts.length) return <Cd t="STATS DASHBOARD" e={"\ud83d\udcca"}><div style={{textAlign:"center", padding:20, color:C.dim}}>Add participants on Home tab first.</div></Cd>;
+
+  const tb = (l, k) => (
+    <button onClick={() => setDt(k)} style={{
+      background: dt === k ? C.gold : "transparent", color: dt === k ? "#0f172a" : C.dim,
+      border:"none", borderRadius:8, padding:"8px 12px", fontWeight:700, fontSize:12, cursor:"pointer", fontFamily:"Outfit,sans-serif", whiteSpace:"nowrap"
+    }}>{l}</button>
+  );
+
+  const llb = parts.map(n => ({name:n, ...stats.ls[n]})).filter(x => x.t > 0).sort((a, b) => b.pct - a.pct || b.c - a.c);
+  const atlb = parts.map(n => ({name:n, ...(stats.ps[n] || {c:0, t:0, pct:0, bb:bbCI(0,0)})})).filter(x => x.t > 0).sort((a, b) => b.bb.mean - a.bb.mean);
+
+  const thS = {textAlign:"left", padding:"6px 8px", fontSize:12, color:C.dim, borderBottom:"1px solid "+C.border, fontFamily:"Space Mono,monospace", whiteSpace:"nowrap"};
+  const tdS = {padding:"5px 8px", borderBottom:"1px solid "+C.border+"22", whiteSpace:"nowrap"};
+
+  return (
+    <div>
+      <div style={{display:"flex", gap:4, marginBottom:16, background:C.card, borderRadius:12, padding:4, overflowX:"auto"}}>
+        {tb("Live","live")}{tb("All-Time","alltime")}{tb("Records","records")}{tb("Schools","schools")}{tb("Teams","teams")}{tb("Picks","pickintel")}
+      </div>
+
+      {dt === "live" && (
+        <div>
+          <Cd t={DY + " LIVE LEADERBOARD"} e={"\ud83c\udfc6"}>
+            {lr.length === 0 ? <div style={{textAlign:"center", padding:20, color:C.dim}}>No picks logged yet.</div>
+             : llb.length === 0 ? <div style={{color:C.dim, fontSize:14, padding:12}}>No scored guesses yet.</div>
+             : llb.map((p, i) => <LBR key={p.name} rank={i+1} name={p.name} c={p.c} t={p.t} pct={p.pct}/>)}
+          </Cd>
+          {cp <= 32 && (
+            <Cd t={"PICK #" + cp + " GUESS DISTRIBUTION"} e={"\ud83d\udd2e"}>
+              {(() => {
+                let o = 0, d = 0, ng = 0;
+                parts.forEach(n => { const g = lg[n + "-" + cp]; if (g === "OFF") o++; else if (g === "DEF") d++; else ng++; });
+                const t = o + d;
+                return (
+                  <div>
+                    <div style={{display:"flex", gap:16, justifyContent:"center", marginBottom:12}}>
+                      <SBox l="OFFENSE" v={o} c={C.off}/><SBox l="DEFENSE" v={d} c={C.def}/><SBox l="NO GUESS" v={ng} c={C.dim}/>
+                    </div>
+                    {t > 0 && <MBr op={o/t} h={20}/>}
+                  </div>
+                );
+              })()}
+            </Cd>
+          )}
+          {lr.length > 0 && (
+            <Cd t="PICK-BY-PICK RESULTS" e={"\ud83d\udccb"}>
+              <div style={{overflowX:"auto"}}>
+                <table style={{width:"100%", borderCollapse:"collapse", fontSize:13}}>
+                  <thead><tr><th style={thS}>#</th><th style={thS}>Result</th>
+                    {parts.map(n => <th key={n} style={{...thS, maxWidth:60, overflow:"hidden", textOverflow:"ellipsis"}}>{n.split(" ")[0]}</th>)}
+                  </tr></thead>
+                  <tbody>{lr.map(r => (
+                    <tr key={r.pick}><td style={tdS}>{r.pick}</td><td style={tdS}><SB s={r.side} sm={true}/></td>
+                      {parts.map(n => { const g = lg[n + "-" + r.pick]; const ok = g ? g === r.side : null;
+                        return <td key={n} style={{...tdS, color: ok === true ? C.green : ok === false ? C.red : C.dim, fontWeight: ok !== null ? 700 : 400}}>{g ? (ok ? "\u2713" : "\u2717") : "\u2014"}</td>;
+                      })}
+                    </tr>
+                  ))}</tbody>
+                </table>
+              </div>
+            </Cd>
+          )}
+        </div>
+      )}
+
+      {dt === "alltime" && (
+        <Cd t="ALL-TIME LEADERBOARD" e={"\ud83c\udfc5"} sub="Beta-Binomial posterior mean">
+          {atlb.map((p, i) => (
+            <div key={p.name} style={{padding:"10px 0", borderBottom:"1px solid "+C.border+"22"}}>
+              <div style={{display:"flex", alignItems:"center", gap:8, marginBottom:4}}>
+                <RkB r={i+1}/><span style={{fontWeight:700, fontSize:15}}>{p.name}</span>
+                <span style={{marginLeft:"auto", fontFamily:"Space Mono,monospace", fontSize:14, fontWeight:700}}>{(100 * p.bb.mean).toFixed(1)}%</span>
+              </div>
+              <div style={{display:"flex", alignItems:"center", gap:8, paddingLeft:32}}>
+                <div style={{flex:1}}><CIBar low={p.bb.low} mean={p.bb.mean} high={p.bb.high}/></div>
+                <span style={{fontSize:12, color:C.dim, whiteSpace:"nowrap"}}>{p.c}/{p.t} raw</span>
+              </div>
+              <div style={{display:"flex", gap:4, paddingLeft:32, marginTop:6, flexWrap:"wrap"}}>
+                {Object.entries(stats.ps[p.name]?.byY || {}).map(([yr, ys]) => (
+                  <span key={yr} style={{fontSize:11, padding:"2px 6px", borderRadius:4,
+                    background: ys.pct >= 0.6 ? "#10b98122" : ys.pct <= 0.4 ? "#ef444422" : C.cardAlt,
+                    color: ys.pct >= 0.6 ? C.green : ys.pct <= 0.4 ? C.red : C.dim,
+                    fontFamily:"Space Mono,monospace"
+                  }}>{"'" + String(yr).slice(2) + ": " + (100*ys.pct).toFixed(0) + "%"}</span>
+                ))}
+              </div>
+            </div>
+          ))}
+        </Cd>
+      )}
+
+      {dt === "records" && (
+        <div>
+          <Cd t="BEST SINGLE DRAFT" e={"\u2b50"} sub="Min 10 picks">
+            {stats.bd.slice(0, 5).map((d, i) => (
+              <div key={i} style={{display:"flex", alignItems:"center", gap:8, padding:"6px 0", borderBottom:"1px solid "+C.border+"22"}}>
+                <RkB r={i+1}/><span style={{fontWeight:700}}>{d.name}</span><span style={{color:C.dim, fontSize:13}}>{d.yr}</span>
+                <span style={{marginLeft:"auto", fontFamily:"Space Mono,monospace", fontWeight:700, color:C.green}}>{(100*d.pct).toFixed(1)}%</span>
+                <span style={{fontSize:12, color:C.dim}}>{d.c}/{d.t}</span>
+              </div>
+            ))}
+          </Cd>
+          <Cd t="WORST SINGLE DRAFT" e={"\ud83d\udc80"} sub="Min 10 picks">
+            {stats.wd.slice(0, 5).map((d, i) => (
+              <div key={i} style={{display:"flex", alignItems:"center", gap:8, padding:"6px 0", borderBottom:"1px solid "+C.border+"22"}}>
+                <span style={{fontFamily:"Space Mono,monospace", fontSize:13, color:C.dim, width:20, textAlign:"right"}}>{i+1}</span>
+                <span style={{fontWeight:700}}>{d.name}</span><span style={{color:C.dim, fontSize:13}}>{d.yr}</span>
+                <span style={{marginLeft:"auto", fontFamily:"Space Mono,monospace", fontWeight:700, color:C.red}}>{(100*d.pct).toFixed(1)}%</span>
+                <span style={{fontSize:12, color:C.dim}}>{d.c}/{d.t}</span>
+              </div>
+            ))}
+          </Cd>
+          <Cd t="MOST VARIABLE" e={"\ud83c\udfb2"} sub="Std dev of yearly accuracy">
+            {Object.entries(stats.vr).sort((a, b) => b[1] - a[1]).map(([n, sd], i) => (
+              <div key={n} style={{display:"flex", alignItems:"center", gap:8, padding:"6px 0", borderBottom:"1px solid "+C.border+"22"}}>
+                <span style={{fontFamily:"Space Mono,monospace", fontSize:13, color:C.dim, width:20, textAlign:"right"}}>{i+1}</span>
+                <span style={{fontWeight:700}}>{n}</span>
+                <span style={{marginLeft:"auto", fontFamily:"Space Mono,monospace", fontSize:14}}>{"\u03c3 = " + (100*sd).toFixed(1) + "%"}</span>
+              </div>
+            ))}
+            {Object.keys(stats.vr).length === 0 && <div style={{color:C.dim, fontSize:14, padding:12}}>Need more multi-year participants.</div>}
+          </Cd>
+        </div>
+      )}
+
+      {dt === "schools" && (
+        <div>
+          <Cd t="GO HAWKEYES!" e={"\ud83d\udc9b"} sub="Iowa picks through the years">
+            {stats.iowaPicks.length === 0 ? (
+              <div style={{color:C.dim, fontSize:14, padding:12}}>No Iowa picks in the data yet.</div>
+            ) : (
+              <div>
+                <div style={{display:"flex", gap:16, justifyContent:"center", marginBottom:16}}>
+                  <div style={{textAlign:"center"}}>
+                    <div style={{fontSize:36, fontWeight:900, color:"#fbbf24", fontFamily:"Space Mono,monospace"}}>{stats.iowaPicks.length}</div>
+                    <div style={{fontSize:11, color:C.dim}}>HAWKEYE PICKS</div>
+                  </div>
+                  <div style={{textAlign:"center"}}>
+                    <div style={{fontSize:36, fontWeight:900, color: stats.iowaTotal.t > 0 && stats.iowaTotal.c/stats.iowaTotal.t >= 0.5 ? C.green : C.red, fontFamily:"Space Mono,monospace"}}>
+                      {stats.iowaTotal.t > 0 ? (100*stats.iowaTotal.c/stats.iowaTotal.t).toFixed(0) + "%" : "\u2014"}
+                    </div>
+                    <div style={{fontSize:11, color:C.dim}}>GROUP ACCURACY</div>
+                  </div>
+                  <div style={{textAlign:"center"}}>
+                    <div style={{fontSize:36, fontWeight:900, color:C.text, fontFamily:"Space Mono,monospace"}}>{stats.iowaTotal.c}/{stats.iowaTotal.t}</div>
+                    <div style={{fontSize:11, color:C.dim}}>CORRECT</div>
+                  </div>
+                </div>
+                <div style={{marginBottom:16}}>
+                  {stats.iowaPicks.map((r, i) => (
+                    <div key={i} style={{display:"flex", alignItems:"center", gap:8, padding:"5px 0", borderBottom:"1px solid "+C.border+"22"}}>
+                      <span style={{fontFamily:"Space Mono,monospace", fontSize:12, color:C.dim, width:36, textAlign:"right"}}>{r.y} #{r.p}</span>
+                      <SB s={r.s} sm={true}/>
+                      <span style={{fontWeight:600, fontSize:13}}>{r.pl}</span>
+                      <span style={{color:C.dim, fontSize:12}}>{r.pos} {"\u2022"} {r.tm}</span>
+                    </div>
+                  ))}
+                </div>
+                {Object.keys(stats.iowaByPerson).length > 0 && (
+                  <div>
+                    <div style={{fontSize:12, color:C.dim, marginBottom:6, fontFamily:"Space Mono,monospace"}}>INDIVIDUAL HAWKEYE ACCURACY</div>
+                    {Object.entries(stats.iowaByPerson).sort((a,b) => b[1].pct - a[1].pct || b[1].t - a[1].t).map(([name, v]) => (
+                      <div key={name} style={{display:"flex", alignItems:"center", gap:8, padding:"4px 0", borderBottom:"1px solid "+C.border+"11"}}>
+                        <span style={{fontWeight:600, fontSize:13, flex:1}}>{name}</span>
+                        <span style={{fontFamily:"Space Mono,monospace", fontSize:14, fontWeight:700, color: v.pct >= 0.6 ? C.green : v.pct <= 0.4 ? C.red : C.text}}>
+                          {(100*v.pct).toFixed(0)}%
+                        </span>
+                        <span style={{fontSize:12, color:C.dim, width:30, textAlign:"right"}}>{v.c}/{v.t}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </Cd>
+          <Cd t="BY CONFERENCE" e={"\ud83c\udfdf\ufe0f"} sub="Group accuracy when picks come from each conference">
+            {Object.entries(stats.confStats).filter(([,v]) => v.t >= 5).sort((a,b) => b[1].t - a[1].t).map(([conf, v]) => (
+              <div key={conf} style={{display:"flex", alignItems:"center", gap:8, padding:"8px 0", borderBottom:"1px solid "+C.border+"22"}}>
+                <span style={{fontWeight:700, fontSize:14, width:120}}>{conf}</span>
+                <div style={{flex:1}}><MBr op={v.t > 0 ? v.c/v.t : 0.5} h={12}/></div>
+                <span style={{fontFamily:"Space Mono,monospace", fontSize:14, fontWeight:700, color: v.c/v.t >= 0.6 ? C.green : v.c/v.t <= 0.4 ? C.red : C.text, width:50, textAlign:"right"}}>
+                  {(100*v.c/v.t).toFixed(0)}%
+                </span>
+                <span style={{fontSize:12, color:C.dim, width:40, textAlign:"right"}}>{v.c}/{v.t}</span>
+              </div>
+            ))}
+          </Cd>
+          <Cd t="BY COLLEGE" e={"\ud83c\udf93"} sub="Top schools by # of picks guessed on">
+            {Object.entries(stats.colStats).filter(([,v]) => v.t >= 3).sort((a,b) => b[1].t - a[1].t).map(([col, v]) => (
+              <div key={col} style={{display:"flex", alignItems:"center", gap:8, padding:"6px 0", borderBottom:"1px solid "+C.border+"22"}}>
+                <span style={{fontWeight:600, fontSize:13, flex:1, minWidth:0, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap"}}>{col}</span>
+                <span style={{fontFamily:"Space Mono,monospace", fontSize:14, fontWeight:700, color: v.c/v.t >= 0.6 ? C.green : v.c/v.t <= 0.4 ? C.red : C.text}}>
+                  {(100*v.c/v.t).toFixed(0)}%
+                </span>
+                <span style={{fontSize:12, color:C.dim, width:40, textAlign:"right"}}>{v.c}/{v.t}</span>
+              </div>
+            ))}
+          </Cd>
+        </div>
+      )}
+
+      {dt === "teams" && (
+        <Cd t="BY NFL TEAM" e={"\ud83c\udfc8"} sub="Group accuracy and tendency when each team picks">
+          {Object.entries(stats.teamStats).filter(([,v]) => v.t >= 3).sort((a,b) => b[1].t - a[1].t).map(([tm, v]) => (
+            <div key={tm} style={{display:"flex", alignItems:"center", gap:8, padding:"8px 0", borderBottom:"1px solid "+C.border+"22", flexWrap:"wrap"}}>
+              <span style={{fontWeight:700, fontSize:14, width:100}}>{tm}</span>
+              <div style={{flex:1, minWidth:80}}><MBr op={v.off/(v.off+v.def)} h={10}/></div>
+              <span style={{fontSize:11, color:C.dim, width:50, textAlign:"center"}}>{v.off}O/{v.def}D</span>
+              <span style={{fontFamily:"Space Mono,monospace", fontSize:14, fontWeight:700, color: v.c/v.t >= 0.6 ? C.green : v.c/v.t <= 0.4 ? C.red : C.text, width:50, textAlign:"right"}}>
+                {(100*v.c/v.t).toFixed(0)}%
+              </span>
+              <span style={{fontSize:12, color:C.dim, width:40, textAlign:"right"}}>{v.c}/{v.t}</span>
+            </div>
+          ))}
+        </Cd>
+      )}
+
+      {dt === "pickintel" && (
+        <div>
+          <Cd t="HISTORICAL PICK TENDENCIES" e={"\ud83e\udde0"} sub="OFF vs DEF by pick # (2017-2025)">
+            <div style={{display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(140px,1fr))", gap:8}}>
+              {Array.from({length:32}, (_, i) => i + 1).map(p => {
+                const pr = stats.pr[p];
+                return (
+                  <div key={p} style={{background:C.card, borderRadius:8, padding:"8px 10px", border:"1px solid "+C.border+"33"}}>
+                    <div style={{fontSize:12, fontFamily:"Space Mono,monospace", color:C.dim, marginBottom:4}}>Pick #{p}</div>
+                    <MBr op={pr.op} h={12}/>
+                    <div style={{fontSize:11, color:C.dim, marginTop:3}}>{pr.o}O / {pr.d}D</div>
+                  </div>
+                );
+              })}
+            </div>
+          </Cd>
+          <Cd t="GROUP ACCURACY BY PICK #" e={"\ud83c\udfaf"} sub="How well has this group guessed each pick?">
+            <div style={{display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(140px,1fr))", gap:8}}>
+              {Array.from({length:32}, (_, i) => i + 1).map(p => {
+                const ga = stats.ga[p];
+                return (
+                  <div key={p} style={{background:C.card, borderRadius:8, padding:"8px 10px", border:"1px solid "+C.border+"33"}}>
+                    <div style={{fontSize:12, fontFamily:"Space Mono,monospace", color:C.dim, marginBottom:4}}>Pick #{p}</div>
+                    <div style={{fontSize:18, fontWeight:800, color: ga.pct >= 0.6 ? C.green : ga.pct <= 0.4 ? C.red : C.text}}>
+                      {ga.t > 0 ? (100*ga.pct).toFixed(0) + "%" : "\u2014"}
+                    </div>
+                    <div style={{fontSize:11, color:C.dim}}>{ga.c}/{ga.t}</div>
+                  </div>
+                );
+              })}
+            </div>
+          </Cd>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function Cd({t, e, sub, children}) {
+  return (
+    <div style={{background:C.card, borderRadius:16, padding:20, marginBottom:16, border:"1px solid "+C.border+"33"}}>
+      <div style={{display:"flex", alignItems:"center", gap:8, marginBottom: sub ? 2 : 14}}>
+        <span style={{fontSize:20}}>{e}</span>
+        <h2 style={{margin:0, fontSize:16, fontWeight:800, letterSpacing:1}}>{t}</h2>
+      </div>
+      {sub && <div style={{fontSize:12, color:C.dim, marginBottom:14, paddingLeft:28}}>{sub}</div>}
+      {children}
+    </div>
+  );
+}
+
+function SB({s, sm}) {
+  const o = s === "OFF";
+  return <span style={{background: o ? "#f59e0b22" : "#3b82f622", color: o ? C.off : C.def, fontWeight:800, fontSize: sm ? 11 : 13, padding: sm ? "2px 6px" : "3px 10px", borderRadius:6, fontFamily:"Space Mono,monospace", border: "1px solid " + (o ? "#f59e0b44" : "#3b82f644")}}>{s}</span>;
+}
+
+function SBtn({s, sel, onClick, lg}) {
+  const o = s === "OFF"; const b = o ? C.off : C.def;
+  return <button onClick={onClick} style={{background: sel ? b : "transparent", color: sel ? "#fff" : b, border: "2px solid " + b, borderRadius:10, padding: lg ? "14px 24px" : "6px 14px", fontWeight:800, fontSize: lg ? 18 : 13, cursor:"pointer", fontFamily:"Outfit,sans-serif", flex: lg ? 1 : undefined, boxShadow: sel ? "0 4px 16px " + b + "44" : "none"}}>{s}</button>;
+}
+
+function MBr({op, h}) {
+  const ht = h || 14;
+  const pct = Math.max(0, Math.min(100, op * 100));
+  return (
+    <div style={{display:"flex", borderRadius:ht/2, overflow:"hidden", height:ht, background:C.cardAlt}}>
+      <div style={{width:pct.toFixed(1) + "%", background:"linear-gradient(90deg,"+C.off+","+C.offDk+")", borderRadius:ht/2+"px 0 0 "+ht/2+"px"}}/>
+      <div style={{flex:1, background:"linear-gradient(90deg,"+C.defDk+","+C.def+")", borderRadius:"0 "+ht/2+"px "+ht/2+"px 0"}}/>
+    </div>
+  );
+}
+
+function CIBar({low, mean, high}) {
+  return (
+    <div style={{position:"relative", height:16, background:C.cardAlt, borderRadius:8}}>
+      <div style={{position:"absolute", top:4, height:8, borderRadius:4, left:low*100+"%", width:(high-low)*100+"%", background:"#f59e0b44"}}/>
+      <div style={{position:"absolute", top:2, width:12, height:12, borderRadius:"50%", left:"calc("+mean*100+"% - 6px)", background:C.gold, border:"2px solid #0f172a"}}/>
+      <div style={{position:"absolute", top:0, bottom:0, left:"50%", width:1, background:C.border}}/>
+    </div>
+  );
+}
+
+function LBR({rank, name, c, t, pct}) {
+  return (
+    <div style={{display:"flex", alignItems:"center", gap:8, padding:"10px 0", borderBottom:"1px solid "+C.border+"22"}}>
+      <RkB r={rank}/><span style={{fontWeight:700, fontSize:15, flex:1}}>{name}</span>
+      <span style={{fontFamily:"Space Mono,monospace", fontSize:18, fontWeight:800, color: pct >= 0.6 ? C.green : pct <= 0.4 ? C.red : C.text}}>{(100*pct).toFixed(0)}%</span>
+      <span style={{fontFamily:"Space Mono,monospace", fontSize:12, color:C.dim, width:40, textAlign:"right"}}>{c}/{t}</span>
+    </div>
+  );
+}
+
+function RkB({r}) {
+  const e = {1:"\ud83e\udd47", 2:"\ud83e\udd48", 3:"\ud83e\udd49"};
+  return <span style={{fontSize:18, width:24, textAlign:"center", display:"inline-block"}}>{e[r] || <span style={{fontSize:14, fontFamily:"Space Mono,monospace", color:C.dim}}>{r}</span>}</span>;
+}
+
+function SBox({l, v, c}) {
+  return (
+    <div style={{textAlign:"center"}}>
+      <div style={{fontSize:28, fontWeight:900, color:c, fontFamily:"Space Mono,monospace"}}>{v}</div>
+      <div style={{fontSize:11, color:C.dim, letterSpacing:1}}>{l}</div>
+    </div>
+  );
+}
+
+
+// ─── Mount ───
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(<App />);
+</script>
+</body>
+</html>
